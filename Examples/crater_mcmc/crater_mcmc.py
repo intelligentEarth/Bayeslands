@@ -331,7 +331,7 @@ class MCMC():
 
 def main():
 	random.seed(time.time())
-	samples = 5
+	samples = 500
 	simtime = 100000
 	run_nb = 0
 	xmlinput = 'crater.xml'
