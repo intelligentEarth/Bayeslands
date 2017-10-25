@@ -172,7 +172,6 @@ class MCMC():
 
 	def rmse(self, prediction, target):
 		rmse =np.sqrt(((prediction - target) ** 2).mean(axis = None))
-
 		return rmse
 
 	def prior_likelihood(self):
@@ -244,6 +243,7 @@ class MCMC():
 			[likelihood_proposal, pred_data, rmse] = self.likelihood_func(v_proposal, y_data, tau_pro)
 			diff_likelihood = likelihood_proposal - likelihood # to divide probability, must subtract
 			print '(Sampler) likelihood_proposal:', likelihood_proposal, 'diff_likelihood',diff_likelihood
+			
 			mh_prob = min(1, math.exp(diff_likelihood))
 			u = random.uniform(0,1)
 			print 'u', u, 'and mh_probability', mh_prob
@@ -265,6 +265,7 @@ class MCMC():
 				pos_tau[i + 1,] = tau_pro
 				#pos_samples[i + 1,] = pred_data
 				pos_rmse[i + 1,] = rmse
+				self.save_params(naccept, pos_erod[i + 1,], pos_rain[i + 1], pos_rmse[i + 1,], pos_samples[i + 1,])
 			else:
 				pos_v[i + 1,] = pos_v[i,]
 				pos_tau[i + 1,] = pos_tau[i,]
@@ -283,10 +284,54 @@ class MCMC():
 		accept_ratio = accepted_count / (samples * 1.0) * 100
 
 		return (pos_v, pos_tau, pos_erod, pos_rain, pos_rmse, accept_ratio, accepted_count)
+	
+
+	def save_params(self,naccept, pos_erod, pos_rain, pos_rmse, pos_samples):
+		erod__ = str(pos_erod)
+		if not os.path.isfile('%s/accept_erod.txt' % (self.filename)):
+			with file(('%s/accept_erod.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\n'.format(naccept))
+				outfile.write(pos_erod)
+		else:
+			with file(('%s/accept_erod.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\n'.format(naccept))
+				outfile.write(pos_erod)
+
+		rain__ = str(pos_rain)
+		if not os.path.isfile('%s/accept_rain.txt' % (self.filename)):
+			with file(('%s/accept_rain.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\n'.format(naccept))
+				outfile.write(pos_rain)
+		else:
+			with file(('%s/accept_rain.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\n'.format(naccept))
+				outfile.write(pos_rain)
+
+
+		rmse__ = str(pos_rmse)
+		if not os.path.isfile('%s/accept_rmse.txt' % (self.filename)):
+			with file(('%s/accept_rmse.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\n'.format(naccept))
+				outfile.write(pos_rmse)
+		else:
+			with file(('%s/accept_rmse.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\n'.format(naccept))
+				outfile.write(pos_rmse)
+
+		fx__ = str(pos_samples)
+		if not os.path.isfile('%s/accept_samples.txt' % (self.filename)):
+			with file(('%s/accept_samples.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\n'.format(naccept))
+				outfile.write(pos_samples)
+		else:
+			with file(('%s/accept_samples.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\n'.format(naccept))
+				outfile.write(pos_samples)
+
 
 def main():
 	random.seed(time.time())
-	samples = 200
+	samples = 5
 	simtime = 100000
 	run_nb = 0
 	xmlinput = 'crater.xml'
@@ -309,43 +354,19 @@ def main():
 	
 	rmse_mu = np.mean(pos_rmse[int(burnin):])
 	rmse_std = np.std(pos_rmse[int(burnin):])
+
+	print 'mean rmse:',rmse_mu, 'standard deviation:', rmse_std
+
+	with file(('%s/out_results.txt' % (filename)),'w') as outres:
+		outres.write('Mean RMSE: {0}\nStandard deviation: {1}\nAccept ratio: {2} %\nSamples accepted : {3} out of {4}\n'.format(rmse_mu, rmse_std, accept_ratio, accepted_count, samples))
+
+	if not os.path.isfile(('%s/out_GLVE.csv' % (filename))):
+		np.savetxt("%s/out_GLVE.csv" % (filename), np.c_[pos_m,pos_ax,pos_ay], delimiter=',')
+
+	if not os.path.isfile(('%s/out_pos.csv' % (filename))):
+		np.savetxt("%s/out_pos.csv" % (filename), pos_v, delimiter=',')
+
 	print 'mean rmse:',rmse_mu, 'standard deviation:', rmse_std
 	print 'Finished simulations'
 
 if __name__ == "__main__": main()
-
-# def run_Model(self, badlands, input_vector):
-	# 	badlands.convert_vector(input_vector)
-	# 	self.initial_erod, self.initial_rain = badlands.load_xml(self.input)
-	# 	badlands.run_to_time(200000)
-		
-	# 	res = np.column_stack((badlands.FVmesh.node_coords[:, :2],badlands.elevation))
-	# 	regz = self.elevArray(res)
-	# 	return regz # Not sure what this is
-
-	# def elevArray(self, coords):
-	# 	x, y, z = np.hsplit(coords, 3)        
-	# 	dx = (x[1]-x[0])[0]
-	# 	nx = int((x.max() - x.min())/dx+1)
-	# 	ny = int((y.max() - y.min())/dx+1)
-	# 	xi = np.linspace(x.min(), x.max(), nx)
-	# 	yi = np.linspace(y.min(), y.max(), ny)
-	# 	xi, yi = np.meshgrid(xi, yi)
-	# 	xyi = np.dstack([xi.flatten(), yi.flatten()])[0]
-	# 	XY = np.column_stack((x,y))
-	# 	tree = cKDTree(XY)
-	# 	distances, indices = tree.query(xyi, k=3)
-	# 	z_vals = z[indices][:,:,0]
-	# 	zi = np.average(z_vals,weights=(1./distances), axis=1)
-	# 	onIDs = np.where(distances[:,0] == 0)[0]
-	# 	if len(onIDs) > 0:
-	# 	    zi[onIDs] = z[indices[onIDs,0],0]
-	# 	zreg = np.reshape(zi,(ny,nx))
-
-	# 	return zreg
-
-	#rmse = np.sqrt(np.sum((prediction - target)**2))
-	#rmse /= float(prediction.shape[0] * prediction.shape[1])
-
-	# rmse = np.sum(((prediction - target)**2)) / (float(prediction.shape[0] * prediction.shape[1]))
-	# rmse = np.sqrt(rmse)
