@@ -9,6 +9,7 @@ import shutil
 from PIL import Image
 from io import StringIO
 from cycler import cycler
+import os
 
 import matplotlib as mpl
 import matplotlib.mlab as mlab
@@ -265,7 +266,7 @@ class MCMC():
 				pos_tau[i + 1,] = tau_pro
 				#pos_samples[i + 1,] = pred_data
 				pos_rmse[i + 1,] = rmse
-				self.save_params(naccept, pos_erod[i + 1,], pos_rain[i + 1], pos_rmse[i + 1,], pos_samples[i + 1,])
+				self.save_params(naccept, pos_erod[i + 1,], pos_rain[i + 1], pos_rmse[i + 1,])
 			else:
 				pos_v[i + 1,] = pos_v[i,]
 				pos_tau[i + 1,] = pos_tau[i,]
@@ -286,56 +287,45 @@ class MCMC():
 		return (pos_v, pos_tau, pos_erod, pos_rain, pos_rmse, accept_ratio, accepted_count)
 	
 
-	def save_params(self,naccept, pos_erod, pos_rain, pos_rmse, pos_samples):
+	def save_params(self,naccept, pos_erod, pos_rain, pos_rmse):
 		erod__ = str(pos_erod)
 		if not os.path.isfile('%s/accept_erod.txt' % (self.filename)):
 			with file(('%s/accept_erod.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\n'.format(naccept))
-				outfile.write(pos_erod)
+				outfile.write(erod__)
 		else:
 			with file(('%s/accept_erod.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\n'.format(naccept))
-				outfile.write(pos_erod)
+				outfile.write(erod__)
 
 		rain__ = str(pos_rain)
 		if not os.path.isfile('%s/accept_rain.txt' % (self.filename)):
 			with file(('%s/accept_rain.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\n'.format(naccept))
-				outfile.write(pos_rain)
+				outfile.write(rain__)
 		else:
 			with file(('%s/accept_rain.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\n'.format(naccept))
-				outfile.write(pos_rain)
+				outfile.write(rain__)
 
 
 		rmse__ = str(pos_rmse)
 		if not os.path.isfile('%s/accept_rmse.txt' % (self.filename)):
 			with file(('%s/accept_rmse.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\n'.format(naccept))
-				outfile.write(pos_rmse)
+				outfile.write(rmse__)
 		else:
 			with file(('%s/accept_rmse.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\n'.format(naccept))
-				outfile.write(pos_rmse)
-
-		fx__ = str(pos_samples)
-		if not os.path.isfile('%s/accept_samples.txt' % (self.filename)):
-			with file(('%s/accept_samples.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\n'.format(naccept))
-				outfile.write(pos_samples)
-		else:
-			with file(('%s/accept_samples.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\n'.format(naccept))
-				outfile.write(pos_samples)
-
+				outfile.write(rmse__)
 
 def main():
 	random.seed(time.time())
-	samples = 500
-	simtime = 100000
+	samples = 5
+	simtime = 1000
 	run_nb = 0
 	xmlinput = 'crater.xml'
-	filename = ('mcmcresults_%s' % (run_nb))
+	filename = ('output_%s' % (run_nb))
 	erodlimts = [0.,1.0]
 	rainlimits = [0.,1.0]
 	data_mcmc = np.loadtxt('data/badlands.txt') #z2DReal
