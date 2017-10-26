@@ -39,7 +39,7 @@ class MCMC():
 		self.initial_erod = []
 		self.initial_rain = []
 
-		self.step_erod = 0.02
+		self.step_erod = 1.e-5
 		self.step_rain = 0.02
 		self.step_eta = 0.05
 
@@ -266,7 +266,7 @@ class MCMC():
 				pos_tau[i + 1,] = tau_pro
 				#pos_samples[i + 1,] = pred_data
 				pos_rmse[i + 1,] = rmse
-				self.save_params(naccept, pos_erod[i + 1,], pos_rain[i + 1], pos_rmse[i + 1,])
+				self.save_params(i, pos_erod[i + 1,], pos_rain[i + 1], pos_rmse[i + 1,])
 			else:
 				pos_v[i + 1,] = pos_v[i,]
 				pos_tau[i + 1,] = pos_tau[i,]
@@ -321,14 +321,20 @@ class MCMC():
 
 def main():
 	random.seed(time.time())
-	samples = 5
-	simtime = 1000
+	samples = 350
+	simtime = 100000
 	run_nb = 0
 	xmlinput = 'crater.xml'
-	filename = ('output_%s' % (run_nb))
+
 	erodlimts = [0.,1.0]
 	rainlimits = [0.,1.0]
 	data_mcmc = np.loadtxt('data/badlands.txt') #z2DReal
+
+	while os.path.exists('mcmcresults_%s' % (run_nb)):
+		run_nb+=1
+	if not os.path.exists('mcmcresults_%s' % (run_nb)):
+		os.makedirs('mcmcresults_%s' % (run_nb))
+		filename = ('mcmcresults_%s' % (run_nb))
 
 	mcmc = MCMC(simtime, samples, data_mcmc, filename, xmlinput, erodlimts, rainlimits)
 
@@ -349,9 +355,6 @@ def main():
 
 	with file(('%s/out_results.txt' % (filename)),'w') as outres:
 		outres.write('Mean RMSE: {0}\nStandard deviation: {1}\nAccept ratio: {2} %\nSamples accepted : {3} out of {4}\n'.format(rmse_mu, rmse_std, accept_ratio, accepted_count, samples))
-
-	if not os.path.isfile(('%s/out_GLVE.csv' % (filename))):
-		np.savetxt("%s/out_GLVE.csv" % (filename), np.c_[pos_m,pos_ax,pos_ay], delimiter=',')
 
 	if not os.path.isfile(('%s/out_pos.csv' % (filename))):
 		np.savetxt("%s/out_pos.csv" % (filename), pos_v, delimiter=',')
