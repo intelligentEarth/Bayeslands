@@ -40,8 +40,8 @@ class MCMC():
 		self.initial_rain = []
 
 		self.step_erod = 1.e-5
-		self.step_rain = 0.02
-		self.step_eta = 0.05
+		self.step_rain = 0.1
+		self.step_eta = 0.02
 
 	def plotElev(self,size=(8,8),elev=None,erodep=None):
 		rcParams['figure.figsize']=size
@@ -190,24 +190,23 @@ class MCMC():
 		rmse = np.zeros(samples)
 
 		#Initial prediction
-		max_erod = 1.e-4
-		max_rain = 4.0
-
+		# max_erod = 1.e-4
+		# max_rain = 4.0
 		#erod = pos_erod[0] = np.random.uniform(0., max_erod)
 		#rain = pos_rain[0] = np.random.uniform(0., max_rain)
 		
-		erod = pos_erod[0] = 9.e-5
-		rain = pos_rain[0] = 0.5
+		#Starting point
+		erod = pos_erod[0] = 1.e-4
+		rain = pos_rain[0] = 3.0
 	
-		print 'erod ' , erod , ' rain ', rain
 		v_proposal=[]
 		v_proposal = np.append(v_proposal,(erod,rain))
 		pos_v = np.zeros((samples, v_proposal.size))
 
 		initial_pred, erodep = self.blackbox(v_proposal[0], v_proposal[1])
 
-		mat = np.matrix(initial_pred)
-		np.savetxt('initial_prediction.txt', mat, fmt = '%.5f')
+		# mat = np.matrix(initial_pred)
+		# np.savetxt('initial_prediction.txt', mat, fmt = '%.5f')
 
 		eta = np.log(np.var(initial_pred - y_data))
 		tau_pro = np.exp(eta)
@@ -228,15 +227,15 @@ class MCMC():
 			print '\nSample: ', i
 			start = time.time()
 			p_erod = erod + np.random.normal(0,self.step_erod,1)
-			if p_erod < 0:
+			if p_erod < self.erodlimits[0]:
 			    p_erod = erod
-			elif p_erod > max_erod:
+			elif p_erod > self.erodlimits[1]:
 			    p_erod = erod
 
 			p_rain = rain + np.random.normal(0,self.step_rain,1)
-			if p_rain < 0:
+			if p_rain < self.rainlimits[0]:
 			    p_rain = p_rain
-			elif p_rain > max_rain:
+			elif p_rain > self.rainlimits[1]:
 			    p_rain = rain
 
 			v_proposal = []
@@ -246,6 +245,7 @@ class MCMC():
 			tau_pro = math.exp(eta_pro)
 			[likelihood_proposal, pred_data, rmse] = self.likelihood_func(v_proposal, y_data, tau_pro)
 			diff_likelihood = likelihood_proposal - likelihood # to divide probability, must subtract
+
 			print '(Sampler) likelihood_proposal:', likelihood_proposal, 'diff_likelihood',diff_likelihood
 			
 			mh_prob = min(1, math.exp(diff_likelihood))
@@ -311,7 +311,6 @@ class MCMC():
 				outfile.write('\n# {0}\n'.format(naccept))
 				outfile.write(rain__)
 
-
 		rmse__ = str(pos_rmse)
 		if not os.path.isfile('%s/accept_rmse.txt' % (self.filename)):
 			with file(('%s/accept_rmse.txt' % (self.filename)),'w') as outfile:
@@ -324,13 +323,13 @@ class MCMC():
 
 def main():
 	random.seed(time.time())
-	samples = 10
+	samples = 50
 	simtime = 150000
 	run_nb = 0
 	xmlinput = 'crater.xml'
 
-	erodlimts = [0.,1.0]
-	rainlimits = [0.,1.0]
+	erodlimts = [1.e-6,1.e-4]
+	rainlimits = [0.5,4.0]
 	data_mcmc = np.loadtxt('data/badlands.txt') #z2DReal
 
 	while os.path.exists('mcmcresults_%s' % (run_nb)):
