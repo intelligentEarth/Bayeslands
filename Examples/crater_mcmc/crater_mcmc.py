@@ -190,14 +190,14 @@ class MCMC():
 		rmse = np.zeros(samples)
 
 		#Initial prediction
-		max_erod = 1.0
-		max_rain = 1.0
+		max_erod = 1.e-4
+		max_rain = 4.0
 
 		#erod = pos_erod[0] = np.random.uniform(0., max_erod)
 		#rain = pos_rain[0] = np.random.uniform(0., max_rain)
 		
 		erod = pos_erod[0] = 9.e-5
-		rain = pos_rain[0] = 1.0
+		rain = pos_rain[0] = 0.5
 	
 		print 'erod ' , erod , ' rain ', rain
 		v_proposal=[]
@@ -205,6 +205,9 @@ class MCMC():
 		pos_v = np.zeros((samples, v_proposal.size))
 
 		initial_pred, erodep = self.blackbox(v_proposal[0], v_proposal[1])
+
+		mat = np.matrix(initial_pred)
+		np.savetxt('initial_prediction.txt', mat, fmt = '%.5f')
 
 		eta = np.log(np.var(initial_pred - y_data))
 		tau_pro = np.exp(eta)
@@ -321,8 +324,8 @@ class MCMC():
 
 def main():
 	random.seed(time.time())
-	samples = 350
-	simtime = 100000
+	samples = 10
+	simtime = 150000
 	run_nb = 0
 	xmlinput = 'crater.xml'
 
