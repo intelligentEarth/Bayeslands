@@ -135,6 +135,37 @@ class Crater_MCMC():
 
 		return elev,erodep	## Considering elev as ystar
 
+    def save_params(self,naccept, pos_rain, pos_erod, pos_rmse):
+		pos_rain = str(pos_rain)
+		if not os.path.isfile(('%s/accept_m.txt' % (self.filename))):
+			with file(('%s/accept_m.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))    
+				outfile.write(pos_rain)
+		else:
+			with file(('%s/accept_m.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))
+				outfile.write(pos_rain)
+
+		pos_erod = str(pos_erod)		
+		if not os.path.isfile(('%s/accept_m.txt' % (self.filename))):
+			with file(('%s/accept_m.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))    
+				outfile.write(pos_rain)
+		else:
+			with file(('%s/accept_m.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))
+				outfile.write(pos_rain)
+
+		rmse__ = str(pos_rmse)
+		if not os.path.isfile(('%s/accept_rmse.txt' % (self.filename))):
+			with file(('%s/accept_rmse.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))
+				outfile.write(rmse__)
+		else:
+			with file(('%s/accept_rmse.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))
+				outfile.write(rmse__)
+
 	def rmse(self, ystar, ydata):
 		rmse =np.sqrt(((ystar - ydata) ** 2).mean(axis = None))
 		return rmse
@@ -159,9 +190,7 @@ class Crater_MCMC():
 		#Creating storage for data
 		pos_erod = np.zeros(samples)
 		pos_rain = np.zeros(samples)
-		pos_rmse = np.zeros(samples)
-		pos_samples = np.zeros(samples)
-		pos_tau = np.zeros(samples)
+
 		count_list = []
 
 		#Initial Prediction
@@ -177,10 +206,14 @@ class Crater_MCMC():
 		tau_pro = np.exp(eta)
 		prior_loss = 1
 
+		pos_rmse = np.full(samples, rmse)
+		pos_tau = np.full(samples, tau_pro)
+
 		[loss, ystar, rmse] = self.loss_func(v_proposal, ydata, tau_pro)
 		count_list.append(0)
 		print '\tinitial loss:', loss, 'and initial rmse:', rmse
 
+        self.save_params(naccept, pos_rain[0], pos_erod[0],pos_rmse[0])
 		start = time.time()
 
 		for i in range(samples-1):
@@ -230,7 +263,8 @@ class Crater_MCMC():
 				pos_rain[i+1] = rain
 				pos_tau[i + 1,] = tau_pro
 				pos_rmse[i + 1,] = rmse
-			
+				self.save_params(naccept, pos_rain[i + 1], pos_erod[i + 1], pos_rmse[i+1,])
+
 			else: #reject
 				pos_tau[i + 1,] = pos_tau[i,]
 				pos_rmse[i + 1,] = pos_rmse[i,]
