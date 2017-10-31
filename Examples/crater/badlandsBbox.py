@@ -144,4 +144,7 @@ def blackbox(inputname=None, rain=0., erodibility=0., etime=1e6):
 
     print 'Badlands black box model took (s):',tm.clock()-tstart
 
+    elev=np.matrix(elev)
+    np.savetxt('badlands_generated.txt',elev,fmt='%.5f')
+    
     return elev,erodep

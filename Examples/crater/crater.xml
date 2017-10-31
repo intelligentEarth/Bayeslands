@@ -4,7 +4,7 @@
     <!-- Regular grid structure -->
     <grid>
         <!-- Digital elevation model file path -->
-        <demfile>data/nodes.csv</demfile>
+        <demfile>data/res_crater.csv</demfile>
         <!-- Boundary type: flat, slope, fixed or wall -->
         <boundary>fixed</boundary>
         <!-- Optional parameter (integer) used to decrease TIN resolution.
@@ -19,7 +19,7 @@
         <!-- Simulation start time [a] -->
         <start>0.</start>
         <!-- Simulation end time [a] -->
-        <end>200000.</end>
+        <end>150000.</end>
         <!-- Display interval [a] -->
         <display>5000.</display>
     </time>
@@ -37,7 +37,7 @@
             <!-- Rain start time [a] -->
             <rstart>0.</rstart>
             <!-- Rain end time [a] -->
-            <rend>200000.</rend>
+            <rend>150000.</rend>
             <!-- Precipitation value [m/a] - (optional) -->
             <rval>1.</rval>
         </rain>
@@ -71,7 +71,7 @@
          law which states that transport rate depends linearly on topographic gradient. -->
     <creep>
         <!-- Surface diffusion coefficient [m2/a] -->
-        <caerial>2.5e-2</caerial>
+        <caerial>2.e-2</caerial>
         <!-- Marine diffusion coefficient [m2/a] -->
         <cmarine>5.e-2</cmarine>
         <!-- River transported sediment diffusion
