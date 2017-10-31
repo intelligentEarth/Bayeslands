@@ -213,7 +213,7 @@ class Crater_MCMC():
 		count_list.append(0)
 		print '\tinitial loss:', loss, 'and initial rmse:', rmse
 
-        self.save_params(naccept, pos_rain[0], pos_erod[0],pos_rmse[0])
+		self.save_params(naccept, pos_rain[0], pos_erod[0],pos_rmse[0])
 		start = time.time()
 
 		for i in range(samples-1):
@@ -323,9 +323,6 @@ def main():
 	with file(('%s/out_results.txt' % (filename)),'w') as outres:
 		outres.write('Mean RMSE: {0}\nStandard deviation: {1}\nAccept ratio: {2} %\nSamples accepted : {3} out of {4}\n'.format(rmse_mu, rmse_std, accept_ratio, accepted_count, samples))
 
-	with file(('%s/out_results.txt' % (filename)),'w') as outres:
-		outres.write('Mean RMSE: {0}\nStandard deviation: {1}\nAccept ratio: {2} %\nSamples accepted : {3} out of {4}\n'.format(rmse_mu, rmse_std, accept_ratio, accepted_count, samples))
-	
 	print '\nFinished simulations'
 
 if __name__ == "__main__": main()
