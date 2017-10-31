@@ -135,7 +135,7 @@ class Crater_MCMC():
 
 		return elev,erodep	## Considering elev as ystar
 
-    def save_params(self,naccept, pos_rain, pos_erod, pos_rmse):
+	def save_params(self,naccept, pos_rain, pos_erod, pos_rmse):
 		pos_rain = str(pos_rain)
 		if not os.path.isfile(('%s/accept_m.txt' % (self.filename))):
 			with file(('%s/accept_m.txt' % (self.filename)),'w') as outfile:
@@ -206,10 +206,11 @@ class Crater_MCMC():
 		tau_pro = np.exp(eta)
 		prior_loss = 1
 
+
+		[loss, ystar, rmse] = self.loss_func(v_proposal, ydata, tau_pro)
 		pos_rmse = np.full(samples, rmse)
 		pos_tau = np.full(samples, tau_pro)
 
-		[loss, ystar, rmse] = self.loss_func(v_proposal, ydata, tau_pro)
 		count_list.append(0)
 		print '\tinitial loss:', loss, 'and initial rmse:', rmse
 
