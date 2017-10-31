@@ -4,14 +4,14 @@
     <!-- Regular grid structure -->
     <grid>
         <!-- Digital elevation model file path -->
-        <demfile>data/res_crater.csv</demfile>
+        <demfile>data/nodes.csv</demfile>
         <!-- Boundary type: flat, slope, fixed or wall -->
         <boundary>fixed</boundary>
         <!-- Optional parameter (integer) used to decrease TIN resolution.
              The default value is set to 1. Increasing the factor
              value will multiply the digital elevation model resolution
              accordingly.  -->
-        <resfactor>1</resfactor>
+        <resfactor>30</resfactor>
     </grid>
 
     <!-- Simulation time structure -->
@@ -21,7 +21,7 @@
         <!-- Simulation end time [a] -->
         <end>150000.</end>
         <!-- Display interval [a] -->
-        <display>5000.</display>
+        <display>150000.</display>
     </time>
 
     <sea>
@@ -63,7 +63,7 @@
          <!-- The erodibility coefficient is scale-dependent and its value depend
               on lithology and mean precipitation rate, channel width, flood
               frequency, channel hydraulics. -->
-        <erodibility>9.e-5</erodibility>
+        <erodibility>9.e-4</erodibility>
     </sp_law>
 
     <!-- Linear slope diffusion parameters:
@@ -71,7 +71,7 @@
          law which states that transport rate depends linearly on topographic gradient. -->
     <creep>
         <!-- Surface diffusion coefficient [m2/a] -->
-        <caerial>2.e-2</caerial>
+        <caerial>2.5e-2</caerial>
         <!-- Marine diffusion coefficient [m2/a] -->
         <cmarine>5.e-2</cmarine>
         <!-- River transported sediment diffusion
