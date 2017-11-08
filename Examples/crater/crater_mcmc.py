@@ -194,8 +194,8 @@ class Crater_MCMC():
 		count_list = []
 
 		#Initial Prediction
-		rain = pos_rain[0] = 0.8
-		erod = pos_erod[0] = 8.e-5
+		rain = np.random.normal(0.8, step_rain)
+		erod = np.random.normal(8.e-5, step_erod)
 
 		v_proposal = []
 		v_proposal.append(rain)
@@ -205,7 +205,6 @@ class Crater_MCMC():
 		eta = np.log(np.var(ystar_initial - ydata))
 		tau_pro = np.exp(eta)
 		prior_loss = 1
-
 
 		[loss, ystar, rmse] = self.loss_func(v_proposal, ydata, tau_pro)
 		pos_rmse = np.full(samples, rmse)
