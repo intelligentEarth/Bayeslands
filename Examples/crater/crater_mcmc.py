@@ -220,7 +220,7 @@ class Crater_MCMC():
 		for i in range(samples-1):
 			print 'Sample : ', i
 			self.counter+=1
-			p_erod = erod + np.random.normal(0, self.step_rain, 1)
+			p_erod = erod + np.random.normal(0, self.step_erod, 1)
 			if p_erod < self.erodlimits[0]:
 			    p_erod = erod
 			elif p_erod > self.erodlimits[1]:
