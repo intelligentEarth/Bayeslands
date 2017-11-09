@@ -135,24 +135,24 @@ class Crater_MCMC():
 
 	def save_params(self,naccept, pos_rain, pos_erod, pos_rmse):
 		pos_rain = str(pos_rain)
-		if not os.path.isfile(('%s/accept_m.txt' % (self.filename))):
-			with file(('%s/accept_m.txt' % (self.filename)),'w') as outfile:
+		if not os.path.isfile(('%s/accept_rain.txt' % (self.filename))):
+			with file(('%s/accept_rain.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))    
 				outfile.write(pos_rain)
 		else:
-			with file(('%s/accept_m.txt' % (self.filename)),'a') as outfile:
+			with file(('%s/accept_rain.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_rain)
 
 		pos_erod = str(pos_erod)		
-		if not os.path.isfile(('%s/accept_m.txt' % (self.filename))):
-			with file(('%s/accept_m.txt' % (self.filename)),'w') as outfile:
+		if not os.path.isfile(('%s/accept_erod.txt' % (self.filename))):
+			with file(('%s/accept_erod.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))    
-				outfile.write(pos_rain)
+				outfile.write(pos_erod)
 		else:
-			with file(('%s/accept_m.txt' % (self.filename)),'a') as outfile:
+			with file(('%s/accept_erod.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_rain)
+				outfile.write(pos_erod)
 
 		rmse__ = str(pos_rmse)
 		if not os.path.isfile(('%s/accept_rmse.txt' % (self.filename))):
@@ -183,7 +183,6 @@ class Crater_MCMC():
 		#initializing variables
 		samples = self.samples
 		ydata = self.ydata
-		naccept = 0
 		
 		#Creating storage for data
 		pos_erod = np.zeros(samples)
@@ -211,7 +210,7 @@ class Crater_MCMC():
 		count_list.append(0)
 		print '\tinitial loss:', loss, 'and initial rmse:', rmse
 
-		self.save_params(naccept, pos_rain[0], pos_erod[0],pos_rmse[0])
+		self.save_params(0, pos_rain[0], pos_erod[0],pos_rmse[0])
 		start = time.time()
 
 		for i in range(samples-1):
@@ -249,7 +248,6 @@ class Crater_MCMC():
 
 			if u < mh_prob: #accept
 				print i, ' is accepted sample'
-				naccept += 1
 				count_list.append(i)
 				loss = loss_proposal
 				eta = eta_pro
@@ -260,7 +258,7 @@ class Crater_MCMC():
 				pos_rain[i+1] = rain
 				pos_tau[i + 1,] = tau_pro
 				pos_rmse[i + 1,] = rmse
-				self.save_params(naccept, pos_rain[i + 1], pos_erod[i + 1], pos_rmse[i+1,])
+				self.save_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_rmse[i+1,])
 
 			else: #reject
 				pos_tau[i + 1,] = pos_tau[i,]
@@ -285,7 +283,7 @@ def main():
 	random.seed(time.time())
 	xmlinput = 'crater.xml'
 	simtime = 150000
-	samples = 10000
+	samples = 100000
 	run_nb = 0
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]
