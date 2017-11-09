@@ -24,12 +24,13 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 
 class Crater_MCMC():
-	def __init__(self, simtime, samples, ydata , filename, xmlinput, erodlimits, rainlimits, counter):
+	def __init__(self, simtime, samples, ydata , filename, xmlinput, erodlimits, rainlimits, run_nb):
 		self.filename = filename
 		self.input = xmlinput
 		self.ydata = ydata
 		self.simtime = simtime
 		self.samples = samples
+		self.run_nb = run_nb
 		
 		self.erodlimits = erodlimits
 		self.rainlimits = rainlimits
@@ -42,9 +43,6 @@ class Crater_MCMC():
 		self.step_rain = 0.05		
 		self.step_erod = 5.e-6
 		self.step_eta = 0.005
-
-		##DELETE LATER
-		self.counter = counter
 
 	def plotElev(self,size=(8,8),elev=None,erodep=None, name = None):
 		rcParams['figure.figsize']=size
@@ -114,7 +112,7 @@ class Crater_MCMC():
 		model = badlandsModel()
 
 		# Load the XmL input file
-		model.load_xml(self.input)
+		model.load_xml(str(self.run_nb), self.input)
 
 		# Adjust erodibility based on given parameter
 		model.input.SPLero = erodibility
@@ -129,7 +127,7 @@ class Crater_MCMC():
 		# Extract
 		elev,erodep = self.interpolateArray(model.FVmesh.node_coords[:, :2],model.elevation,model.cumdiff)
 
-		self.plotElev(elev = None, erodep = None, name = str(self.counter))
+		self.plotElev(elev = None, erodep = None, name = str(self.run_nb))
 
 		print 'Badlands black box model took (s):',time.clock()-tstart
 
@@ -194,8 +192,8 @@ class Crater_MCMC():
 		count_list = []
 
 		#Initial Prediction
-		rain = np.random.normal(0.8, step_rain)
-		erod = np.random.normal(8.e-5, step_erod)
+		rain = np.random.normal(0.8, self.step_rain)
+		erod = np.random.normal(8.e-5, self.step_erod)
 
 		v_proposal = []
 		v_proposal.append(rain)
@@ -218,14 +216,13 @@ class Crater_MCMC():
 
 		for i in range(samples-1):
 			print 'Sample : ', i
-			self.counter+=1
-			p_erod = erod + np.random.normal(0, self.step_erod, 1)
+			p_erod = erod + np.random.normal(0, self.step_erod)
 			if p_erod < self.erodlimits[0]:
 			    p_erod = erod
 			elif p_erod > self.erodlimits[1]:
 			    p_erod = erod
 
-			p_rain = rain + np.random.normal(0,self.step_rain,1)
+			p_rain = rain + np.random.normal(0,self.step_rain)
 			if p_rain < self.rainlimits[0]:
 			    p_rain = p_rain
 			elif p_rain > self.rainlimits[1]:
@@ -293,9 +290,6 @@ def main():
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]
 
-	## DELETE LATER. Only to visualise
-	counter = 0
-
 	while os.path.exists('mcmcresults_%s' % (run_nb)):
 		run_nb+=1
 	if not os.path.exists('mcmcresults_%s' % (run_nb)):
@@ -303,9 +297,9 @@ def main():
 		filename = ('mcmcresults_%s' % (run_nb))
 	
 	input_file = np.loadtxt('data/badlands.txt')
-	print '\ninput file shape ', input_file.shape, '\n'
+	run_nb_str = 'mcmcresults_' + str(run_nb)
 
-	crater_mcmc = Crater_MCMC(simtime, samples, input_file, filename, xmlinput, erodlimts, rainlimits, counter)
+	crater_mcmc = Crater_MCMC(simtime, samples, input_file, filename, xmlinput, erodlimts, rainlimits, run_nb_str)
 	[pos_rain, pos_erod, pos_tau, pos_rmse, accept_ratio, accepted_count] = crater_mcmc.sampler()
 
 	print 'successfully sampled'

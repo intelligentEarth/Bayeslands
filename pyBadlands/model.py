@@ -43,7 +43,7 @@ class Model(object):
         self.opt_erod = []
         self.opt_rain = []
 
-    def load_xml(self, filename, verbose=False):
+    def load_xml(self, run_nb, filename, verbose=False):
         """
         Load an XML configuration file.
 
@@ -59,7 +59,7 @@ class Model(object):
         np.seterr(divide='ignore',invalid='ignore')
 
         # Only the first node should create a unique output dir
-        self.input = xmlParser.xmlParser(filename, makeUniqueOutputDir=(self._rank == 0))
+        self.input = xmlParser.xmlParser(run_nb, filename, makeUniqueOutputDir=(self._rank == 0))
         self.tNow = self.input.tStart
 
         # Sync the chosen output dir to all nodes
