@@ -164,6 +164,38 @@ class Crater_MCMC():
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(rmse__)
 
+	def save_params_all(self, numsamp, rain, erod, rmse):
+		pos_rain = str(rain)
+		if not os.path.isfile(('%s/_rain.txt' % (self.filename))):
+			with file(('%s/_rain.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))    
+				outfile.write(pos_rain)
+		else:
+			with file(('%s/_rain.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))
+				outfile.write(pos_rain)
+
+		pos_erod = str(erod)		
+		if not os.path.isfile(('%s/_erod.txt' % (self.filename))):
+			with file(('%s/_erod.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))    
+				outfile.write(pos_erod)
+		else:
+			with file(('%s/_erod.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))
+				outfile.write(pos_erod)
+
+		rmse__ = str(rmse)
+		if not os.path.isfile(('%s/_rmse.txt' % (self.filename))):
+			with file(('%s/_rmse.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))
+				outfile.write(rmse__)
+		else:
+			with file(('%s/_rmse.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))
+				outfile.write(rmse__)
+
+
 	def rmse(self, ystar, ydata):
 		rmse =np.sqrt(((ystar - ydata) ** 2).mean(axis = None))
 		return rmse
@@ -246,6 +278,8 @@ class Crater_MCMC():
 			u = random.uniform(0,1)
 			print 'u', u, 'and mh_probability', mh_prob
 
+			self.save_params_all(i, p_rain, p_erod, rmse)
+
 			if u < mh_prob: #accept
 				print i, ' is accepted sample'
 				count_list.append(i)
@@ -283,7 +317,7 @@ def main():
 	random.seed(time.time())
 	xmlinput = 'crater.xml'
 	simtime = 150000
-	samples = 100000
+	samples = 10
 	run_nb = 0
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]
