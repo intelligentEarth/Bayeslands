@@ -24,10 +24,10 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 
 class Crater_MCMC():
-	def __init__(self, simtime, samples, ydata , filename, xmlinput, erodlimits, rainlimits, run_nb):
+	def __init__(self, simtime, samples, real_elev , filename, xmlinput, erodlimits, rainlimits, run_nb):
 		self.filename = filename
 		self.input = xmlinput
-		self.ydata = ydata
+		self.real_elev = real_elev
 		self.simtime = simtime
 		self.samples = samples
 		self.run_nb = run_nb
@@ -131,9 +131,9 @@ class Crater_MCMC():
 
 		print 'Badlands black box model took (s):',time.clock()-tstart
 
-		return elev,erodep	## Considering elev as ystar
+		return elev,erodep	## Considering elev as predicted variable to be compared
 
-	def save_params(self,naccept, pos_rain, pos_erod, pos_rmse):
+	def save_accepted_params(self, naccept, pos_rain, pos_erod, pos_rmse):
 		pos_rain = str(pos_rain)
 		if not os.path.isfile(('%s/accept_rain.txt' % (self.filename))):
 			with file(('%s/accept_rain.txt' % (self.filename)),'w') as outfile:
@@ -164,7 +164,7 @@ class Crater_MCMC():
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(rmse__)
 
-	def save_params_all(self, numsamp, rain, erod, rmse):
+	def save_all_params(self, numsamp, rain, erod, rmse):
 		pos_rain = str(rain)
 		if not os.path.isfile(('%s/_rain.txt' % (self.filename))):
 			with file(('%s/_rain.txt' % (self.filename)),'w') as outfile:
@@ -195,78 +195,93 @@ class Crater_MCMC():
 				outfile.write('\n# {0}\t'.format(numsamp))
 				outfile.write(rmse__)
 
-
-	def rmse(self, ystar, ydata):
-		rmse =np.sqrt(((ystar - ydata) ** 2).mean(axis = None))
+	def rmse(self, predicted_elev, real_elev):
+		rmse =np.sqrt(((predicted_elev - real_elev) ** 2).mean(axis = None))
 		return rmse
 
-	def prior_loss(self):	
-		return 1
-
-	def loss_func(self,input_vector, ydata, tausq):
-		ystar, erodep = self.blackbox(input_vector[0], input_vector[1])
-		rmse = self.rmse(ystar, ydata)
-		loss = -0.5 * np.log(2* math.pi * tausq) - 0.5 * np.square(ystar - ydata) / tausq
-		#loss = 0.5
-		#loss = - 0.5 * np.square(ystar - ydata) / tausq
-		return [np.sum(loss), ystar, rmse]
+	def loss_func(self,input_vector, real_elev, tausq):
+		predicted_elev, predicted_erodep = self.blackbox(input_vector[0], input_vector[1])
+		
+		rmse = self.rmse(predicted_elev, real_elev)
+		
+		loss = -0.5 * np.log(2* math.pi * tausq) - 0.5 * np.square(predicted_elev - real_elev) / tausq
+		
+		return [np.sum(loss), predicted_elev, rmse]
 
 	def sampler(self):
-		#initializing variables
+		# Initializing variables
 		samples = self.samples
-		ydata = self.ydata
+		real_elev = self.real_elev
 		
-		#Creating storage for data
+		# Creating storage for data
 		pos_erod = np.zeros(samples)
 		pos_rain = np.zeros(samples)
 
+		# List of accepted samples
 		count_list = []
 
-		#Initial Prediction
+		# Generating initial Prediction parameters from a known range
 		rain = np.random.normal(0.8, self.step_rain)
 		erod = np.random.normal(8.e-5, self.step_erod)
 
+		# Creating storage for parameters to be passed to Blackbox model 
 		v_proposal = []
 		v_proposal.append(rain)
 		v_proposal.append(erod)
 
-		ystar_initial, erodep = self.blackbox(v_proposal[0], v_proposal[1])
-		eta = np.log(np.var(ystar_initial - ydata))
+		# Output predictions from Blackbox model
+		initial_predicted_elev, initial_predicted_erodep = self.blackbox(v_proposal[0], v_proposal[1])
+		
+		# Calculating eta and tau
+		eta = np.log(np.var(initial_predicted_elev - real_elev))
 		tau_pro = np.exp(eta)
 		prior_loss = 1
 
-		[loss, ystar, rmse] = self.loss_func(v_proposal, ydata, tau_pro)
-		pos_rmse = np.full(samples, rmse)
-		pos_tau = np.full(samples, tau_pro)
-
-		count_list.append(0)
+		#  Passing initial variables along with tau to calculate loss and rmse
+		[loss, predicted_elev, rmse] = self.loss_func(v_proposal, real_elev, tau_pro)
 		print '\tinitial loss:', loss, 'and initial rmse:', rmse
 
-		self.save_params(0, pos_rain[0], pos_erod[0],pos_rmse[0])
-		start = time.time()
+		# Storing RMSE, tau values and adding initial run to accepted list
+		pos_rmse = np.full(samples, rmse)
+		pos_tau = np.full(samples, tau_pro)
+		count_list.append(0)
 
+		# Saving parameters for Initial run
+		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_rmse[0])
+
+		start = time.time()
 		for i in range(samples-1):
+			
 			print 'Sample : ', i
+			
+			# Updating edodibility parameter and checking limits
 			p_erod = erod + np.random.normal(0, self.step_erod)
 			if p_erod < self.erodlimits[0]:
 			    p_erod = erod
 			elif p_erod > self.erodlimits[1]:
 			    p_erod = erod
 
+			# Updating rain parameter and checking limits
 			p_rain = rain + np.random.normal(0,self.step_rain)
 			if p_rain < self.rainlimits[0]:
 			    p_rain = p_rain
 			elif p_rain > self.rainlimits[1]:
 			    p_rain = rain
 
+			# Creating storage for parameters to be passed to Blackbox model 
 			v_proposal = []
 			v_proposal.append(p_rain)
 			v_proposal.append(p_erod)
 
+			# Updating eta and and recalculating tau
 			eta_pro = eta + np.random.normal(0, self.step_eta, 1)
 			tau_pro = math.exp(eta_pro)
 			print 'tau_pro ', tau_pro
-			[loss_proposal, ystar, rmse] = self.loss_func(v_proposal, ydata, tau_pro)
+			
+			# Passing paramters to calculate loss and rmse with new tau
+			[loss_proposal, predicted_elev, rmse] = self.loss_func(v_proposal, predicted_elev, tau_pro)
+			
+			# Difference in loss from previous accepted proposal
 			diff_loss = loss_proposal - loss
 			print '(Sampler) loss_proposal:', loss_proposal, 'diff_likelihood: ',diff_loss
 			
@@ -278,11 +293,12 @@ class Crater_MCMC():
 			u = random.uniform(0,1)
 			print 'u', u, 'and mh_probability', mh_prob
 
-			self.save_params_all(i, p_rain, p_erod, rmse)
+			# Save sample parameters 
+			self.save_all_params(i, p_rain, p_erod, rmse)
 
-			if u < mh_prob: #accept
+			if u < mh_prob: # Accept sample
 				print i, ' is accepted sample'
-				count_list.append(i)
+				count_list.append(i)			# Append sample number to accepted list
 				loss = loss_proposal
 				eta = eta_pro
 				erod = p_erod
@@ -292,15 +308,15 @@ class Crater_MCMC():
 				pos_rain[i+1] = rain
 				pos_tau[i + 1,] = tau_pro
 				pos_rmse[i + 1,] = rmse
-				self.save_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_rmse[i+1,])
+				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_rmse[i+1,]) #Save accepted parameters in accept file
 
-			else: #reject
+			else: # Reject sample
 				pos_tau[i + 1,] = pos_tau[i,]
 				pos_rmse[i + 1,] = pos_rmse[i,]
 				pos_erod[i+1] = pos_erod[i]
 				pos_rain[i+1] = pos_rain[i]
-				print 'REJECTED\nLoss:',loss,'and RMSE rejected:', pos_rmse[i,]
-				print i, 'rejected and retained'
+				print 'REJECTED\nLoss:',loss,' and RMSE rejected:', pos_rmse[i,]
+				print 'Sample ', i, ' rejected and retained'
 		
 		end = time.time()
 		total_time = end - start		
