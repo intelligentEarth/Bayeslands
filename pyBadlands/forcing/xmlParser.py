@@ -1234,7 +1234,6 @@ class xmlParser:
             self.outDir = self.run_nb+'/'+out.text
         else:
             self.outDir = os.getcwd()+ self.run_nb +'/' +'/out'
-
         if self.makeUniqueOutputDir:
             if os.path.exists(self.outDir):
                 self.outDir += '_'+str(len(glob.glob(self.outDir+str('*')))-1)

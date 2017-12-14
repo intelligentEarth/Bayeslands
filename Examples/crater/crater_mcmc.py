@@ -23,25 +23,32 @@ from pyBadlands.model import Model as badlandsModel
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 
+
 class Crater_MCMC():
-	def __init__(self, simtime, samples, real_elev , filename, xmlinput, erodlimits, rainlimits, run_nb):
+	def __init__(self, simtime, samples, real_elev , filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb):
 		self.filename = filename
 		self.input = xmlinput
 		self.real_elev = real_elev
 		self.simtime = simtime
 		self.samples = samples
 		self.run_nb = run_nb
-		
+
 		self.erodlimits = erodlimits
 		self.rainlimits = rainlimits
+		self.mlimit = mlimit
+		self.nlimit = nlimit
 		self.font = 9
 		self.width = 1
-		
+
 		self.initial_erod = []
 		self.initial_rain = []
+		self.initial_m = []
+		self.initial_n = []
 
-		self.step_rain = 0.05		
+		self.step_rain = 0.05
 		self.step_erod = 5.e-6
+		self.step_m = 0.01
+		self.step_n = 0.05
 		self.step_eta = 0.005
 
 	def plotElev(self,size=(8,8),elev=None,erodep=None, name = None):
@@ -106,7 +113,7 @@ class Crater_MCMC():
 		dzreg = np.reshape(dzi,(ny,nx))
 		return zreg,dzreg
 
-	def blackbox(self, rain, erodibility):
+	def blackbox(self, rain, erodibility, m , n):
 		tstart = time.clock()
 		# Re-initialise badlands model
 		model = badlandsModel()
@@ -121,6 +128,10 @@ class Crater_MCMC():
 		# Adjust precipitation values based on given parameter
 		model.force.rainVal[:] = rain
 
+        #Adjust m and n values
+		model.input.SPLm = m
+		model.input.SPLn = n
+        
 		# Run badlands simulation
 		model.run_to_time(self.simtime)
 
@@ -133,7 +144,7 @@ class Crater_MCMC():
 
 		return elev,erodep	## Considering elev as predicted variable to be compared
 
-	def save_accepted_params(self, naccept, pos_rain, pos_erod, pos_rmse):
+	def save_accepted_params(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_rmse):
 		pos_rain = str(pos_rain)
 		if not os.path.isfile(('%s/accept_rain.txt' % (self.filename))):
 			with file(('%s/accept_rain.txt' % (self.filename)),'w') as outfile:
@@ -144,7 +155,7 @@ class Crater_MCMC():
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_rain)
 
-		pos_erod = str(pos_erod)		
+		pos_erod = str(pos_erod)
 		if not os.path.isfile(('%s/accept_erod.txt' % (self.filename))):
 			with file(('%s/accept_erod.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))    
@@ -153,18 +164,38 @@ class Crater_MCMC():
 			with file(('%s/accept_erod.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_erod)
+                
+		pos_m = str(pos_m)
+		if not os.path.isfile(('%s/accept_m.txt' % (self.filename))):
+			with file(('%s/accept_m.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))    
+				outfile.write(pos_m)
+		else:
+			with file(('%s/accept_m.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))
+				outfile.write(pos_m)
 
-		rmse__ = str(pos_rmse)
+		pos_n = str(pos_n)
+		if not os.path.isfile(('%s/accept_n.txt' % (self.filename))):
+			with file(('%s/accept_n.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))    
+				outfile.write(pos_n)
+		else:
+			with file(('%s/accept_n.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(naccept))
+				outfile.write(pos_n)
+                               
+		pos_rmse = str(pos_rmse)
 		if not os.path.isfile(('%s/accept_rmse.txt' % (self.filename))):
 			with file(('%s/accept_rmse.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(rmse__)
+				outfile.write(pos_rmse)
 		else:
 			with file(('%s/accept_rmse.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(rmse__)
+				outfile.write(pos_rmse)
 
-	def save_all_params(self, numsamp, rain, erod, rmse):
+	def save_all_params(self, numsamp, rain, erod, m, n, rmse):
 		pos_rain = str(rain)
 		if not os.path.isfile(('%s/_rain.txt' % (self.filename))):
 			with file(('%s/_rain.txt' % (self.filename)),'w') as outfile:
@@ -175,7 +206,7 @@ class Crater_MCMC():
 				outfile.write('\n# {0}\t'.format(numsamp))
 				outfile.write(pos_rain)
 
-		pos_erod = str(erod)		
+		pos_erod = str(erod)
 		if not os.path.isfile(('%s/_erod.txt' % (self.filename))):
 			with file(('%s/_erod.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\t'.format(numsamp))    
@@ -184,54 +215,81 @@ class Crater_MCMC():
 			with file(('%s/_erod.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(numsamp))
 				outfile.write(pos_erod)
+                
+		pos_m = str(m)
+		if not os.path.isfile(('%s/_m.txt' % (self.filename))):
+			with file(('%s/_m.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))    
+				outfile.write(pos_m)
+		else:
+			with file(('%s/_m.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))
+				outfile.write(pos_m)
+                
+		pos_n = str(n)
+		if not os.path.isfile(('%s/_n.txt' % (self.filename))):
+			with file(('%s/_n.txt' % (self.filename)),'w') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))    
+				outfile.write(pos_n)
+		else:
+			with file(('%s/_n.txt' % (self.filename)),'a') as outfile:
+				outfile.write('\n# {0}\t'.format(numsamp))
+				outfile.write(pos_n)
 
-		rmse__ = str(rmse)
+		pos_rmse = str(rmse)
 		if not os.path.isfile(('%s/_rmse.txt' % (self.filename))):
 			with file(('%s/_rmse.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(rmse__)
+				outfile.write(pos_rmse)
 		else:
 			with file(('%s/_rmse.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(rmse__)
+				outfile.write(pos_rmse)
 
 	def rmse(self, predicted_elev, real_elev):
 		rmse =np.sqrt(((predicted_elev - real_elev) ** 2).mean(axis = None))
 		return rmse
 
 	def loss_func(self,input_vector, real_elev, tausq):
-		predicted_elev, predicted_erodep = self.blackbox(input_vector[0], input_vector[1])
-		
+		predicted_elev, predicted_erodep = self.blackbox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
+
 		rmse = self.rmse(predicted_elev, real_elev)
 		
 		loss = -0.5 * np.log(2* math.pi * tausq) - 0.5 * np.square(predicted_elev - real_elev) / tausq
-		
+
 		return [np.sum(loss), predicted_elev, rmse]
 
 	def sampler(self):
 		# Initializing variables
 		samples = self.samples
 		real_elev = self.real_elev
-		
+
 		# Creating storage for data
 		pos_erod = np.zeros(samples)
 		pos_rain = np.zeros(samples)
+		pos_m = np.zeros(samples)
+		pos_n = np.zeros(samples)
 
 		# List of accepted samples
 		count_list = []
 
 		# Generating initial Prediction parameters from a known range
-		rain = np.random.normal(0.8, self.step_rain)
-		erod = np.random.normal(8.e-5, self.step_erod)
+		rain = np.random.uniform(1, self.step_rain)
+		erod = np.random.uniform(9.e-5, self.step_erod)
+		m = np.random.uniform(0.5, self.step_m)
+		n = np.random.uniform(1, self.step_n)
+         
 
 		# Creating storage for parameters to be passed to Blackbox model 
 		v_proposal = []
 		v_proposal.append(rain)
 		v_proposal.append(erod)
+		v_proposal.append(m)
+		v_proposal.append(n)
 
 		# Output predictions from Blackbox model
-		initial_predicted_elev, initial_predicted_erodep = self.blackbox(v_proposal[0], v_proposal[1])
-		
+		initial_predicted_elev, initial_predicted_erodep = self.blackbox(v_proposal[0], v_proposal[1], v_proposal[2], v_proposal[3])
+
 		# Calculating eta and tau
 		eta = np.log(np.var(initial_predicted_elev - real_elev))
 		tau_pro = np.exp(eta)
@@ -247,13 +305,13 @@ class Crater_MCMC():
 		count_list.append(0)
 
 		# Saving parameters for Initial run
-		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_rmse[0])
+		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_rmse[0])
 
 		start = time.time()
 		for i in range(samples-1):
-			
+
 			print 'Sample : ', i
-			
+
 			# Updating edodibility parameter and checking limits
 			p_erod = erod + np.random.normal(0, self.step_erod)
 			if p_erod < self.erodlimits[0]:
@@ -264,37 +322,54 @@ class Crater_MCMC():
 			# Updating rain parameter and checking limits
 			p_rain = rain + np.random.normal(0,self.step_rain)
 			if p_rain < self.rainlimits[0]:
-			    p_rain = p_rain
+			    p_rain = rain
 			elif p_rain > self.rainlimits[1]:
 			    p_rain = rain
+                
+			# Updating m parameter and checking limits
+			p_m = m + np.random.normal(0,self.step_m)
+			if p_m < self.rainlimits[0]:
+			    p_m = m
+			elif p_m > self.rainlimits[1]:
+			    p_m = m   
+                
+			# Updating n parameter and checking limits
+			p_n = n + np.random.normal(0,self.step_n)
+			if p_n < self.rainlimits[0]:
+			    p_n = n
+			elif p_n > self.rainlimits[1]:
+			    p_n = n  
 
 			# Creating storage for parameters to be passed to Blackbox model 
 			v_proposal = []
 			v_proposal.append(p_rain)
 			v_proposal.append(p_erod)
-
+			v_proposal.append(p_m)
+			v_proposal.append(p_n)            
+            
+            
 			# Updating eta and and recalculating tau
 			eta_pro = eta + np.random.normal(0, self.step_eta, 1)
 			tau_pro = math.exp(eta_pro)
 			print 'tau_pro ', tau_pro
-			
+
 			# Passing paramters to calculate loss and rmse with new tau
 			[loss_proposal, predicted_elev, rmse] = self.loss_func(v_proposal, predicted_elev, tau_pro)
-			
+
 			# Difference in loss from previous accepted proposal
 			diff_loss = loss_proposal - loss
 			print '(Sampler) loss_proposal:', loss_proposal, 'diff_likelihood: ',diff_loss
-			
+
 			try:
 				mh_prob = min(1, math.exp(diff_loss))
 			except OverflowError as e:
 				mh_prob = 1
-			
+
 			u = random.uniform(0,1)
 			print 'u', u, 'and mh_probability', mh_prob
 
 			# Save sample parameters 
-			self.save_all_params(i, p_rain, p_erod, rmse)
+			self.save_all_params(i, p_rain, p_erod, p_m, p_n, rmse)
 
 			if u < mh_prob: # Accept sample
 				print i, ' is accepted sample'
@@ -303,52 +378,62 @@ class Crater_MCMC():
 				eta = eta_pro
 				erod = p_erod
 				rain = p_rain
+				m = p_m
+				n = p_n
+                
 				print  '(Sampler) loss:',loss, ' and rmse:', rmse, 'accepted'
 				pos_erod[i+1] = erod
 				pos_rain[i+1] = rain
+				pos_m[i+1] = m
+				pos_n[i+1] = n
 				pos_tau[i + 1,] = tau_pro
 				pos_rmse[i + 1,] = rmse
-				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_rmse[i+1,]) #Save accepted parameters in accept file
+				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_rmse[i+1,]) #Save accepted parameters in accept file
 
 			else: # Reject sample
 				pos_tau[i + 1,] = pos_tau[i,]
 				pos_rmse[i + 1,] = pos_rmse[i,]
 				pos_erod[i+1] = pos_erod[i]
 				pos_rain[i+1] = pos_rain[i]
+				pos_m[i+1] = pos_m[i]
+				pos_n[i+1] = pos_n[i]
 				print 'REJECTED\nLoss:',loss,' and RMSE rejected:', pos_rmse[i,]
 				print 'Sample ', i, ' rejected and retained'
-		
+
 		end = time.time()
-		total_time = end - start		
+		total_time = end - start
 		print 'Time elapsed:', total_time
 		accepted_count =  len(count_list)
 		print accepted_count, ' number accepted'
 		print len(count_list) / (samples * 0.01), '% was accepted'
 		accept_ratio = accepted_count / (samples * 1.0) * 100
-		
-		return (pos_rain, pos_erod, pos_tau, pos_rmse, accept_ratio, accepted_count)
+
+		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, accept_ratio, accepted_count)
+
 
 def main():
-	
+
 	random.seed(time.time())
 	xmlinput = 'crater.xml'
 	simtime = 150000
-	samples = 10
+	samples = 20
 	run_nb = 0
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]
+	mlimit = [0 , 2]
+	nlimit = [0 , 4]
 
 	while os.path.exists('mcmcresults_%s' % (run_nb)):
 		run_nb+=1
 	if not os.path.exists('mcmcresults_%s' % (run_nb)):
 		os.makedirs('mcmcresults_%s' % (run_nb))
 		filename = ('mcmcresults_%s' % (run_nb))
-	
+
 	input_file = np.loadtxt('data/badlands.txt')
 	run_nb_str = 'mcmcresults_' + str(run_nb)
 
-	crater_mcmc = Crater_MCMC(simtime, samples, input_file, filename, xmlinput, erodlimts, rainlimits, run_nb_str)
-	[pos_rain, pos_erod, pos_tau, pos_rmse, accept_ratio, accepted_count] = crater_mcmc.sampler()
+	crater_mcmc = Crater_MCMC(simtime, samples, input_file, filename, xmlinput, erodlimts, rainlimits, mlimit, nlimit, run_nb_str)
+	[pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, accept_ratio, accepted_count] = crater_mcmc.sampler()
 
 	print 'successfully sampled'
 
@@ -356,7 +441,9 @@ def main():
 	pos_tau = pos_tau[int(burnin):, ]
 	pos_erod = pos_erod[int(burnin):]
 	pos_rain = pos_rain[int(burnin):]
-	
+	pos_m = pos_m[int(burnin):]
+	pos_n = pos_n[int(burnin):]
+    
 	rmse_mu = np.mean(pos_rmse[int(burnin):])
 	rmse_std = np.std(pos_rmse[int(burnin):])
 
@@ -368,4 +455,10 @@ def main():
 	print '\nFinished simulations'
 
 if __name__ == "__main__": main()
+
+
+
+
+
+
 
