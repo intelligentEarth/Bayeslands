@@ -371,20 +371,20 @@ class Model(object):
             if self.tNow >= self.force.next_display:
                 if self.force.next_display > self.input.tStart:
                     outStrata = 1
-                checkPoints.write_checkpoints(self.input, self.recGrid, self.lGIDs, self.inIDs, self.tNow,
-                                            self.FVmesh, self.tMesh, self.force, self.flow, self.rain,
-                                            self.elevation, self.fillH, self.cumdiff, self.cumhill,
-                                            self.outputStep, self.prop, self.mapero, self.cumflex)
+                # checkPoints.write_checkpoints(self.input, self.recGrid, self.lGIDs, self.inIDs, self.tNow,
+                #                             self.FVmesh, self.tMesh, self.force, self.flow, self.rain,
+                #                             self.elevation, self.fillH, self.cumdiff, self.cumhill,
+                #                             self.outputStep, self.prop, self.mapero, self.cumflex)
 
                 if self.straTIN is not None and self.outputStep % self.input.tmesh==0:
                     meshtime = time.clock()
-                    self.straTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep,self._rank)
+                    #self.straTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep,self._rank)
                     if self._rank == 0:
                         print "   - Write sediment mesh output", time.clock() - meshtime
 
                 if self.carbTIN is not None and self.outputStep % self.input.tmesh==0:
                     meshtime = time.clock()
-                    self.carbTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep,self._rank)
+                    #self.carbTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep,self._rank)
                     if self._rank == 0:
                         print "   - Write carbonate mesh output", time.clock() - meshtime
 
@@ -479,16 +479,17 @@ class Model(object):
 
         # Create checkpoint files and write HDF5 output
         if self.input.udw == 0 or self.tNow == self.input.tEnd or self.tNow == self.force.next_display:
-            checkPoints.write_checkpoints(self.input, self.recGrid, self.lGIDs, self.inIDs, self.tNow, \
-                                self.FVmesh, self.tMesh, self.force, self.flow, self.rain, \
-                                self.elevation, self.fillH, self.cumdiff, self.cumhill, self.outputStep, \
-                                self.prop, self.mapero, self.cumflex)
+            # checkPoints.write_checkpoints(self.input, self.recGrid, self.lGIDs, self.inIDs, self.tNow, \
+            #                     self.FVmesh, self.tMesh, self.force, self.flow, self.rain, \
+            #                     self.elevation, self.fillH, self.cumdiff, self.cumhill, self.outputStep, \
+            #                     self.prop, self.mapero, self.cumflex)
             self.force.next_display += self.input.tDisplay
             self.outputStep += 1
             if self.straTIN is not None:
-                self.straTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep-1,self._rank)
+                print 'Processing'
+                #self.straTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep-1,self._rank)
             if self.carbTIN is not None:
-                self.carbTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep-1,self._rank)
+                #self.carbTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep-1,self._rank)
                 self.carbTIN.step += 1
 
         # Update next stratal layer time

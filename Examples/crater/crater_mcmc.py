@@ -45,11 +45,11 @@ class Crater_MCMC():
 		self.initial_m = []
 		self.initial_n = []
 
-		self.step_rain = 0.05
-		self.step_erod = 5.e-6
-		self.step_m = 0.01
-		self.step_n = 0.05
-		self.step_eta = 0.005
+		self.step_rain = 0.01
+		self.step_erod = 1.e-6
+		self.step_m = 0.005
+		self.step_n = 0.01
+		self.step_eta = 0.1
 
 	def plotElev(self,size=(8,8),elev=None,erodep=None, name = None):
 		rcParams['figure.figsize']=size
@@ -128,7 +128,7 @@ class Crater_MCMC():
 		# Adjust precipitation values based on given parameter
 		model.force.rainVal[:] = rain
 
-        #Adjust m and n values
+		#Adjust m and n values
 		model.input.SPLm = m
 		model.input.SPLn = n
         
@@ -278,7 +278,18 @@ class Crater_MCMC():
 		erod = np.random.uniform(9.e-5, self.step_erod)
 		m = np.random.uniform(0.5, self.step_m)
 		n = np.random.uniform(1, self.step_n)
-         
+
+		with file(('%s/description.txt' % (self.filename)),'a') as outfile:
+			outfile.write('\n\samples: {0}'.format(self.samples))
+			outfile.write('\n\tstep_rain: {0}'.format(self.step_rain))
+			outfile.write('\n\tstep_erod: {0}'.format(self.step_erod))
+			outfile.write('\n\tstep_m: {0}'.format(self.step_m))
+			outfile.write('\n\tstep_n: {0}'.format(self.step_n))
+			outfile.write('\n\tstep_eta: {0}'.format(self.step_eta))
+			outfile.write('\n\tInitial_proposed_rain: {0}'.format(rain))
+			outfile.write('\n\tInitial_proposed_erod: {0}'.format(erod))
+			outfile.write('\n\tInitial_proposed_m: {0}'.format(m))
+			outfile.write('\n\tInitial_proposed_n: {0}'.format(n))
 
 		# Creating storage for parameters to be passed to Blackbox model 
 		v_proposal = []
@@ -292,6 +303,7 @@ class Crater_MCMC():
 
 		# Calculating eta and tau
 		eta = np.log(np.var(initial_predicted_elev - real_elev))
+		print 'eta = ', eta
 		tau_pro = np.exp(eta)
 		prior_loss = 1
 
@@ -315,41 +327,41 @@ class Crater_MCMC():
 			# Updating edodibility parameter and checking limits
 			p_erod = erod + np.random.normal(0, self.step_erod)
 			if p_erod < self.erodlimits[0]:
-			    p_erod = erod
+				p_erod = erod
 			elif p_erod > self.erodlimits[1]:
-			    p_erod = erod
+				p_erod = erod
 
 			# Updating rain parameter and checking limits
 			p_rain = rain + np.random.normal(0,self.step_rain)
 			if p_rain < self.rainlimits[0]:
-			    p_rain = rain
+				p_rain = rain
 			elif p_rain > self.rainlimits[1]:
-			    p_rain = rain
+				p_rain = rain
                 
 			# Updating m parameter and checking limits
 			p_m = m + np.random.normal(0,self.step_m)
 			if p_m < self.rainlimits[0]:
-			    p_m = m
+				p_m = m
 			elif p_m > self.rainlimits[1]:
-			    p_m = m   
+				p_m = m
                 
 			# Updating n parameter and checking limits
 			p_n = n + np.random.normal(0,self.step_n)
 			if p_n < self.rainlimits[0]:
-			    p_n = n
+				p_n = n
 			elif p_n > self.rainlimits[1]:
-			    p_n = n  
+				p_n = n
 
-			# Creating storage for parameters to be passed to Blackbox model 
+			# Creating storage for parameters to be passed to Blackbox model
 			v_proposal = []
 			v_proposal.append(p_rain)
 			v_proposal.append(p_erod)
 			v_proposal.append(p_m)
-			v_proposal.append(p_n)            
-            
-            
+			v_proposal.append(p_n)
+
 			# Updating eta and and recalculating tau
 			eta_pro = eta + np.random.normal(0, self.step_eta, 1)
+			print 'eta_pro', eta_pro
 			tau_pro = math.exp(eta_pro)
 			print 'tau_pro ', tau_pro
 
@@ -410,13 +422,37 @@ class Crater_MCMC():
 
 		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, accept_ratio, accepted_count)
 
+	def plotFig(self, pos_rmse, pos_rain, pos_erod):
+		fig = plt.figure(figsize=(15,6))
+		
+		ax = fig.add_subplot(131)
+		rmse_n, rmse_bins, rmse_patches = ax.hist(pos_rmse, facecolor= 'blue', alpha =0.75)
+		#ax.xlabel('RMSE')
+		#ax.ylabel('Frequency')
+		#ax.title('Histogram of RMSE')
+
+		ax1 = fig.add_subplot(132)
+		rain_n, rain_bins, rain_patches = ax1.hist(pos_rain, facecolor = 'blue', alpha =0.75)
+		#ax1.xlabel('Rain')
+		#ax1.ylabel('Frequency')
+		#ax1.title('Histogram of Rain')
+
+		ax2 = fig.add_subplot(133)
+		erod_n, erod_bins, erod_patches = ax2.hist(pos_erod, facecolor = 'blue', alpha =0.75)
+		#ax2.xlabel('Erod')
+		#ax2.ylabel('Frequency')
+		#ax2.title('Histogram of Erod')
+
+		plt.savefig('%s/posterior_dist.png'% (self.filename), bbox_inches='tight', dpi=300, transparent=False)
+		plt.clf()
+
+		return
 
 def main():
-
 	random.seed(time.time())
 	xmlinput = 'crater.xml'
 	simtime = 150000
-	samples = 20
+	samples = 6000
 	run_nb = 0
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]
@@ -452,6 +488,7 @@ def main():
 	with file(('%s/out_results.txt' % (filename)),'w') as outres:
 		outres.write('Mean RMSE: {0}\nStandard deviation: {1}\nAccept ratio: {2} %\nSamples accepted : {3} out of {4}\n'.format(rmse_mu, rmse_std, accept_ratio, accepted_count, samples))
 
+	crater_mcmc.plotFig(pos_rmse,pos_rain,pos_erod)
 	print '\nFinished simulations'
 
 if __name__ == "__main__": main()
