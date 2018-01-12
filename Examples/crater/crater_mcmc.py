@@ -46,7 +46,7 @@ class Crater_MCMC():
 		self.initial_n = []
 
 		self.step_rain = 0.01
-		self.step_erod = 1.e-6
+		self.step_erod = 5.e-7
 		self.step_m = 0.005
 		self.step_n = 0.01
 		self.step_eta = 0.1
@@ -274,10 +274,13 @@ class Crater_MCMC():
 		count_list = []
 
 		# Generating initial Prediction parameters from a known range
-		rain = np.random.uniform(1, self.step_rain)
-		erod = np.random.uniform(9.e-5, self.step_erod)
-		m = np.random.uniform(0.5, self.step_m)
-		n = np.random.uniform(1, self.step_n)
+		rain = np.random.uniform(0.5,4.0)
+		print 'rain initial value', rain
+		erod = np.random.uniform(1.e-6,1.e-4)
+		print 'erod initial value', erod
+
+		m = np.random.uniform(0 , 2)
+		n = np.random.uniform(0 , 4)
 
 		with file(('%s/description.txt' % (self.filename)),'a') as outfile:
 			outfile.write('\n\samples: {0}'.format(self.samples))
@@ -422,37 +425,12 @@ class Crater_MCMC():
 
 		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, accept_ratio, accepted_count)
 
-	def plotFig(self, pos_rmse, pos_rain, pos_erod):
-		fig = plt.figure(figsize=(15,6))
-		
-		ax = fig.add_subplot(131)
-		rmse_n, rmse_bins, rmse_patches = ax.hist(pos_rmse, facecolor= 'blue', alpha =0.75)
-		#ax.xlabel('RMSE')
-		#ax.ylabel('Frequency')
-		#ax.title('Histogram of RMSE')
-
-		ax1 = fig.add_subplot(132)
-		rain_n, rain_bins, rain_patches = ax1.hist(pos_rain, facecolor = 'blue', alpha =0.75)
-		#ax1.xlabel('Rain')
-		#ax1.ylabel('Frequency')
-		#ax1.title('Histogram of Rain')
-
-		ax2 = fig.add_subplot(133)
-		erod_n, erod_bins, erod_patches = ax2.hist(pos_erod, facecolor = 'blue', alpha =0.75)
-		#ax2.xlabel('Erod')
-		#ax2.ylabel('Frequency')
-		#ax2.title('Histogram of Erod')
-
-		plt.savefig('%s/posterior_dist.png'% (self.filename), bbox_inches='tight', dpi=300, transparent=False)
-		plt.clf()
-
-		return
-
+	
 def main():
 	random.seed(time.time())
 	xmlinput = 'crater.xml'
 	simtime = 150000
-	samples = 6000
+	samples = 4000
 	run_nb = 0
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]
@@ -479,11 +457,11 @@ def main():
 	pos_rain = pos_rain[int(burnin):]
 	pos_m = pos_m[int(burnin):]
 	pos_n = pos_n[int(burnin):]
-    
+	
 	rmse_mu = np.mean(pos_rmse[int(burnin):])
 	rmse_std = np.std(pos_rmse[int(burnin):])
 
-	print 'mean rmse:',rmse_mu, 'standard deviation:', rmse_std
+	# print 'mean rmse:',rmse_mu, 'standard deviation:', rmse_std
 
 	with file(('%s/out_results.txt' % (filename)),'w') as outres:
 		outres.write('Mean RMSE: {0}\nStandard deviation: {1}\nAccept ratio: {2} %\nSamples accepted : {3} out of {4}\n'.format(rmse_mu, rmse_std, accept_ratio, accepted_count, samples))
@@ -492,10 +470,4 @@ def main():
 	print '\nFinished simulations'
 
 if __name__ == "__main__": main()
-
-
-
-
-
-
 
