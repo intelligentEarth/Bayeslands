@@ -21,7 +21,7 @@ class xmlParser:
     This class defines XmL input file variables.
     """
 
-    def __init__(self, run_nb, inputfile = None, makeUniqueOutputDir=True):
+    def __init__(self, run_nb, muted = False, inputfile = None, makeUniqueOutputDir=True):
         """
         If makeUniqueOutputDir is set, we create a uniquely-named directory for
         the output. If it's clear, we blindly accept what's in the XML file.
@@ -133,6 +133,8 @@ class xmlParser:
         self.fxmffile = 'xmf/flow.time'
         self.fxdmffile = 'flow.series.xdmf'
 
+        self.muted = muted
+
         self.flexure = False
         self.ftime = None
         self.fnx = None
@@ -202,9 +204,9 @@ class xmlParser:
         self.pelGrowth = 0.
         self.pelDepth = None
 
-        self._get_XmL_Data()
+        self._get_XmL_Data(muted = self.muted)
 
-    def _get_XmL_Data(self):
+    def _get_XmL_Data(self, muted = False):
         """
         Main function used to parse the XmL input file.
         """
@@ -1238,10 +1240,11 @@ class xmlParser:
             if os.path.exists(self.outDir):
                 self.outDir += '_'+str(len(glob.glob(self.outDir+str('*')))-1)
 
-            os.makedirs(self.outDir)
-            os.makedirs(self.outDir+'/h5')
-            os.makedirs(self.outDir+'/xmf')
-            shutil.copy(self.inputfile,self.outDir)
+            if not muted:
+                os.makedirs(self.outDir)
+                os.makedirs(self.outDir+'/h5')
+                os.makedirs(self.outDir+'/xmf')
+                shutil.copy(self.inputfile,self.outDir)
 
         # Extract global wave field parameters
         wavefield = None

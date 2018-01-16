@@ -25,14 +25,14 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 class Crater_MCMC():
-	def __init__(self, simtime, samples, real_elev , filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb):
+	def __init__(self, muted, simtime, samples, real_elev , filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb):
 		self.filename = filename
 		self.input = xmlinput
 		self.real_elev = real_elev
 		self.simtime = simtime
 		self.samples = samples
 		self.run_nb = run_nb
-
+		self.muted = muted
 		self.erodlimits = erodlimits
 		self.rainlimits = rainlimits
 		self.mlimit = mlimit
@@ -45,11 +45,11 @@ class Crater_MCMC():
 		self.initial_m = []
 		self.initial_n = []
 
-		self.step_rain = 0.01
-		self.step_erod = 5.e-7
+		self.step_rain = 0.5
+		self.step_erod = 1.e-6
 		self.step_m = 0.005
-		self.step_n = 0.01
-		self.step_eta = 0.1
+		self.step_n = 0.05
+		self.step_eta = 0.07
 
 	def plotElev(self,size=(8,8),elev=None,erodep=None, name = None):
 		rcParams['figure.figsize']=size
@@ -119,7 +119,7 @@ class Crater_MCMC():
 		model = badlandsModel()
 
 		# Load the XmL input file
-		model.load_xml(str(self.run_nb), self.input)
+		model.load_xml(str(self.run_nb), self.input, muted = self.muted)
 
 		# Adjust erodibility based on given parameter
 		model.input.SPLero = erodibility
@@ -133,7 +133,7 @@ class Crater_MCMC():
 		model.input.SPLn = n
         
 		# Run badlands simulation
-		model.run_to_time(self.simtime)
+		model.run_to_time(self.simtime, muted = self.muted)
 
 		# Extract
 		elev,erodep = self.interpolateArray(model.FVmesh.node_coords[:, :2],model.elevation,model.cumdiff)
@@ -355,6 +355,8 @@ class Crater_MCMC():
 			elif p_n > self.rainlimits[1]:
 				p_n = n
 
+			print 'prain', p_rain
+			print 'perod', p_erod
 			# Creating storage for parameters to be passed to Blackbox model
 			v_proposal = []
 			v_proposal.append(p_rain)
@@ -427,10 +429,12 @@ class Crater_MCMC():
 
 	
 def main():
+
 	random.seed(time.time())
+	muted = True
 	xmlinput = 'crater.xml'
 	simtime = 150000
-	samples = 4000
+	samples = 10000
 	run_nb = 0
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]
@@ -446,7 +450,7 @@ def main():
 	input_file = np.loadtxt('data/badlands.txt')
 	run_nb_str = 'mcmcresults_' + str(run_nb)
 
-	crater_mcmc = Crater_MCMC(simtime, samples, input_file, filename, xmlinput, erodlimts, rainlimits, mlimit, nlimit, run_nb_str)
+	crater_mcmc = Crater_MCMC(muted, simtime, samples, input_file, filename, xmlinput, erodlimts, rainlimits, mlimit, nlimit, run_nb_str)
 	[pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, accept_ratio, accepted_count] = crater_mcmc.sampler()
 
 	print 'successfully sampled'
@@ -466,8 +470,7 @@ def main():
 	with file(('%s/out_results.txt' % (filename)),'w') as outres:
 		outres.write('Mean RMSE: {0}\nStandard deviation: {1}\nAccept ratio: {2} %\nSamples accepted : {3} out of {4}\n'.format(rmse_mu, rmse_std, accept_ratio, accepted_count, samples))
 
-	crater_mcmc.plotFig(pos_rmse,pos_rain,pos_erod)
+	#crater_mcmc.plotFig(pos_rmse,pos_rain,pos_erod)
 	print '\nFinished simulations'
 
 if __name__ == "__main__": main()
-
