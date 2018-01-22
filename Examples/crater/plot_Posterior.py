@@ -30,7 +30,7 @@ def plotPosterior(fname, pos_rmse, pos_rain, pos_erod):
 		font = 9
 		width = 1
 
-		##############################     RAIN      ##############################
+		######################################     RAIN      ################################
 
 		rainmin, rainmax = min(pos_rain), max(pos_rain)
 		#print rainmin, rainmax, len(pos_rmse)
@@ -51,7 +51,7 @@ def plotPosterior(fname, pos_rmse, pos_rain, pos_erod):
 		ax1 = fig.add_subplot(211)
 		ax1.set_facecolor('#f2f2f3')
 
-		n, rainbins, patches = ax1.hist(pos_rain, bins=50, alpha=0.5, facecolor='sandybrown', normed=True)
+		n, rainbins, patches = ax1.hist(pos_rain, bins=20, alpha=0.5, facecolor='sandybrown', normed=True)
 		rainy = mlab.normpdf(rainbins, rainm, rains)
 		l = ax1.plot(rainbins, rainy, 'r--', linewidth= width)
 
@@ -95,7 +95,7 @@ def plotPosterior(fname, pos_rmse, pos_rain, pos_erod):
 		ax1 = fig.add_subplot(211)
 		ax1.set_facecolor('#f2f2f3')
 		
-		n, erodbins, patches = ax1.hist(pos_erod, bins=50, alpha=0.5, facecolor='sandybrown', normed=True)
+		n, erodbins, patches = ax1.hist(pos_erod, bins=20, alpha=0.5, facecolor='sandybrown', normed=True)
 		erody = mlab.normpdf(erodbins, erodm, erods)
 		l = ax1.plot(erodbins, erody, 'r--', linewidth= width)
 
@@ -134,7 +134,7 @@ def plotPosterior(fname, pos_rmse, pos_rain, pos_erod):
 		
 		ax1 = fig.add_subplot(211)
 		ax1.set_facecolor('#f2f2f3')
-		ax1.hist(pos_rmse, bins=50, alpha=0.5, facecolor='sandybrown', normed=True)
+		ax1.hist(pos_rmse, bins=20, alpha=0.5, facecolor='sandybrown', normed=True)
 		ax1.grid(True)
 		ax1.set_ylabel('Frequency',size= font+1)
 		ax1.set_xlabel(r'$\varepsilon$', size= font+1)
