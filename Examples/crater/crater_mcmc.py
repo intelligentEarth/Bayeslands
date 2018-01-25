@@ -24,6 +24,11 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import multivariate_normal
 
+import plotly
+import plotly.plotly as py
+from plotly.graph_objs import *
+plotly.offline.init_notebook_mode()
+from plotly.offline.offline import _plot_html
 
 class Crater_MCMC():
 	def __init__(self, muted, simtime, samples, real_elev , filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb):
@@ -63,7 +68,7 @@ class Crater_MCMC():
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes("right", size="2%", pad=0.2)
 			plt.colorbar(im,cax=cax)
-			#plt.show()
+			plt.show()
 			plt.savefig(name)
 			plt.close(fig)
 		if erodep is not None:
@@ -132,7 +137,7 @@ class Crater_MCMC():
 		#Adjust m and n values
 		model.input.SPLm = m
 		model.input.SPLn = n
-        
+
 		# Run badlands simulation
 		model.run_to_time(self.simtime, muted = self.muted)
 
@@ -144,6 +149,62 @@ class Crater_MCMC():
 		print 'Badlands black box model took (s):',time.clock()-tstart
 
 		return elev,erodep	## Considering elev as predicted variable to be compared
+
+	def viewGrid(self, sample_num, rmse, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
+		"""
+		Use Plotly library to visualise the grid in 3D.
+
+		Parameters
+		----------
+		variable : resolution
+		    Required resolution for the model grid (in metres).
+
+		variable: width
+		    Figure width.
+
+		variable: height
+		    Figure height.
+
+		variable: zmin
+		    Minimal elevation.
+
+		variable: zmax
+		    Maximal elevation.
+
+		variable: height
+		    Figure height.
+
+		variable: zData
+		    Elevation data to plot.
+
+		variable: title
+		    Title of the graph.
+		"""
+
+		if zmin == None:
+			zmin = self.zi.min()
+
+		if zmax == None:
+			zmax = self.zi.max()
+
+		data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YIGnBu' ) ])
+
+		layout = Layout(
+			title='Crater Elevation- rmse = %s , rain = %s, erod = %s' %(rmse, rain, erod),
+			autosize=True,
+			width=width,
+			height=height,
+			scene=Scene(
+				zaxis=ZAxis(range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+				xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+				yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+				bgcolor="rgb(244, 244, 248)"
+			)
+		)
+
+		fig = Figure(data=data, layout=layout)
+		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='/home/danial/BayesLands/Examples/crater/%s/plot_image_%s.html' %(self.filename, sample_num), validate=False)
+		return
 
 	def save_accepted_params(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_rmse, pos_tau, pos_lik):
 		pos_rain = str(pos_rain)
@@ -165,7 +226,7 @@ class Crater_MCMC():
 			with file(('%s/accept_erod.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_erod)
-                
+
 		pos_m = str(pos_m)
 		if not os.path.isfile(('%s/accept_m.txt' % (self.filename))):
 			with file(('%s/accept_m.txt' % (self.filename)),'w') as outfile:
@@ -185,7 +246,7 @@ class Crater_MCMC():
 			with file(('%s/accept_n.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_n)
-                               
+
 		pos_rmse = str(pos_rmse)
 		if not os.path.isfile(('%s/accept_rmse.txt' % (self.filename))):
 			with file(('%s/accept_rmse.txt' % (self.filename)),'w') as outfile:
@@ -236,7 +297,7 @@ class Crater_MCMC():
 			with file(('%s/_erod.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(numsamp))
 				outfile.write(pos_erod)
-                
+
 		pos_m = str(m)
 		if not os.path.isfile(('%s/_m.txt' % (self.filename))):
 			with file(('%s/_m.txt' % (self.filename)),'w') as outfile:
@@ -246,7 +307,7 @@ class Crater_MCMC():
 			with file(('%s/_m.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(numsamp))
 				outfile.write(pos_m)
-                
+
 		pos_n = str(n)
 		if not os.path.isfile(('%s/_n.txt' % (self.filename))):
 			with file(('%s/_n.txt' % (self.filename)),'w') as outfile:
@@ -318,18 +379,22 @@ class Crater_MCMC():
 		#Generating initial Prediction parameters from a known range
 		rain = np.random.uniform(0.5,4.0)
 		print 'rain initial value', rain
-		erod = np.random.uniform(1.e-6,1.e-4)
-		print 'erod initial value', erod
-		m = np.random.uniform(0,2)
-		print 'm initial value'
-		n = np.random.uniform(0,4)
-		print 'n initial value'
+		# erod = np.random.uniform(1.e-6,1.e-4)
+		# print 'erod initial value', erod
+		# m = np.random.uniform(0,2)
+		# print 'm initial value', m
+		# n = np.random.uniform(0,4)
+		# print 'n initial value', n
 
-		# Generating close to optimal values
-		# rain = np.random.uniform(0.9,1.1)
-		# erod = np.random.uniform(8.e-5,9.e-5)
-		# m = np.random.uniform(0.4,0.6)
-		# n = np.random.uniform(0.9,1.1)
+		#Generating close to optimal values
+		# rain = np.random.uniform(0.99,1.01)
+		# print 'rain initial value', rain		
+		erod = np.random.uniform(89.e-6,90.e-6)
+		print 'erod initial value', erod		
+		m = np.random.uniform(0.49,0.51)
+		print 'm initial value', m
+		n = np.random.uniform(0.99,1.01)
+		print 'n initial value', n
 
 		with file(('%s/description.txt' % (self.filename)),'a') as outfile:
 			outfile.write('\n\samples: {0}'.format(self.samples))
@@ -376,17 +441,12 @@ class Crater_MCMC():
 
 		elevation_file = open('%s/elev_array.txt' % (self.filename), "a")
 
+		self.viewGrid(0, rmse, rain, erod, width=1600, height=1600, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid')
+
 		start = time.time()
 		for i in range(samples-1):
 
 			print 'Sample : ', i
-
-			# Updating edodibility parameter and checking limits
-			p_erod = erod + np.random.normal(0, self.step_erod)
-			if p_erod < self.erodlimits[0]:
-				p_erod = erod
-			elif p_erod > self.erodlimits[1]:
-				p_erod = erod
 
 			# Updating rain parameter and checking limits
 			p_rain = rain + np.random.normal(0,self.step_rain)
@@ -394,20 +454,35 @@ class Crater_MCMC():
 				p_rain = rain
 			elif p_rain > self.rainlimits[1]:
 				p_rain = rain
-                
-			# Updating m parameter and checking limits
-			p_m = m + np.random.normal(0,self.step_m)
-			if p_m < self.rainlimits[0]:
-				p_m = m
-			elif p_m > self.rainlimits[1]:
-				p_m = m
-                
-			# Updating n parameter and checking limits
-			p_n = n + np.random.normal(0,self.step_n)
-			if p_n < self.rainlimits[0]:
-				p_n = n
-			elif p_n > self.rainlimits[1]:
-				p_n = n
+
+			# p_rain = rain
+
+			# Updating edodibility parameter and checking limits
+			# p_erod = erod + np.random.normal(0, self.step_erod)
+			# if p_erod < self.erodlimits[0]:
+			# 	p_erod = erod
+			# elif p_erod > self.erodlimits[1]:
+			# 	p_erod = erod
+
+			p_erod = erod
+
+			# # Updating m parameter and checking limits
+			# p_m = m + np.random.normal(0,self.step_m)
+			# if p_m < self.rainlimits[0]:
+			# 	p_m = m
+			# elif p_m > self.rainlimits[1]:
+			# 	p_m = m
+
+			p_m = m
+
+			# # Updating n parameter and checking limits
+			# p_n = n + np.random.normal(0,self.step_n)
+			# if p_n < self.rainlimits[0]:
+			# 	p_n = n
+			# elif p_n > self.rainlimits[1]:
+			# 	p_n = n
+
+			p_n = n
 
 			# Creating storage for parameters to be passed to Blackbox model
 			v_proposal = []
@@ -439,6 +514,7 @@ class Crater_MCMC():
 
 			# Save sample parameters 
 			self.save_all_params(i, p_rain, p_erod, p_m, p_n, rmse, tau_pro, likelihood_proposal)
+			self.viewGrid(i, rmse, p_rain, p_erod, width=1600, height=1600, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid '+ str(i))
 
 			if u < mh_prob: # Accept sample
 				print i, ' is accepted sample'
@@ -449,7 +525,7 @@ class Crater_MCMC():
 				rain = p_rain
 				m = p_m
 				n = p_n
-                
+
 				print  '(Sampler) likelihood:',likelihood, ' and rmse:', rmse, 'accepted'
 				pos_erod[i+1] = erod
 				pos_rain[i+1] = rain
@@ -502,7 +578,7 @@ def main():
 	muted = True
 	xmlinput = 'crater.xml'
 	simtime = 150000
-	samples = 2000
+	samples = 5000
 	run_nb = 0
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]

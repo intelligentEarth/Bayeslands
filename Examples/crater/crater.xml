@@ -39,7 +39,7 @@
             <!-- Rain end time [a] -->
             <rend>150000.</rend>
             <!-- Precipitation value [m/a] - (optional) -->
-            <rval>1.</rval>
+            <rval>1.1</rval>
         </rain>
     </precipitation>
 
@@ -63,7 +63,7 @@
          <!-- The erodibility coefficient is scale-dependent and its value depend
               on lithology and mean precipitation rate, channel width, flood
               frequency, channel hydraulics. -->
-        <erodibility>9.e-5</erodibility>
+        <erodibility>9e-05</erodibility>
     </sp_law>
 
     <!-- Linear slope diffusion parameters:
