@@ -55,10 +55,7 @@ def OptGenerator(inputname, rain, erodibility, etime):
 
     model = badlandsModel()
     # Define the XmL input file
-    model.load_xml('1234',inputname)
-    
-    #rreal=1
-    #ereal=9.e-5
+    model.load_xml('1234',inputname, muted = True)
 
     rreal = rain
     ereal = erodibility

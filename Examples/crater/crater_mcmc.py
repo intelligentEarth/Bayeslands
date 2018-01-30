@@ -63,7 +63,7 @@ class Crater_MCMC():
 			fig = plt.figure()
 			ax=plt.gca()
 			im = ax.imshow(np.flipud(elev),interpolation='nearest',cmap=cmo.cm.delta,
-			               vmin=elev.min(), vmax=elev.max())
+							vmin=elev.min(), vmax=elev.max())
 			plt.title('Elevation [m]', fontsize=10)
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes("right", size="2%", pad=0.2)
@@ -75,7 +75,7 @@ class Crater_MCMC():
 			fig = plt.figure()
 			ax=plt.gca()
 			im = ax.imshow(np.flipud(erodep),interpolation='nearest',cmap=cmo.cm.balance,
-			               vmin=erodep.min(), vmax=-erodep.min())
+							vmin=erodep.min(), vmax=-erodep.min())
 			plt.title('Erosion/deposition [m]', fontsize=10)
 			divider = make_axes_locatable(ax)
 			cax = divider.append_axes("right", size="2%", pad=0.2)
@@ -120,6 +120,37 @@ class Crater_MCMC():
 		return zreg,dzreg
 
 	def blackbox(self, rain, erodibility, m , n):
+		"""
+		Main entry point for running badlands model with different forcing conditions.
+		The following forcing conditions can be used:
+			- different uniform rain (uniform meaning same precipitation value on the entire region)
+			- different uniform erodibility (uniform meaning same erodibility value on the entire region)
+
+		Parameters
+		----------
+		variable : inputname
+			XML file defining the parameters used to run Badlands simulation.
+
+		variable: rain
+			Requested uniform precipitation value.
+
+		variable: erodibility
+			Requested uniform erodibility value.
+
+		variable: etime
+			Duration of the experiment.
+
+		Return
+		------
+		The function returns 2D numpy arrays containing the following information:
+
+		variable: elev
+			Elevation as a 2D numpy array (regularly spaced dataset with resolution equivalent to simulation one)
+
+		variable: erodep
+			Cumulative erosion/deposition accumulation as a 2D numpy array (regularly spaced as well)
+
+		"""
 		tstart = time.clock()
 		# Re-initialise badlands model
 		model = badlandsModel()
@@ -379,22 +410,22 @@ class Crater_MCMC():
 		#Generating initial Prediction parameters from a known range
 		rain = np.random.uniform(0.5,4.0)
 		print 'rain initial value', rain
-		# erod = np.random.uniform(1.e-6,1.e-4)
-		# print 'erod initial value', erod
-		# m = np.random.uniform(0,2)
-		# print 'm initial value', m
-		# n = np.random.uniform(0,4)
-		# print 'n initial value', n
+		erod = np.random.uniform(1.e-6,1.e-4)
+		print 'erod initial value', erod
+		m = np.random.uniform(0,2)
+		print 'm initial value', m
+		n = np.random.uniform(0,4)
+		print 'n initial value', n
 
 		#Generating close to optimal values
 		# rain = np.random.uniform(0.99,1.01)
 		# print 'rain initial value', rain		
-		erod = np.random.uniform(89.e-6,90.e-6)
-		print 'erod initial value', erod		
-		m = np.random.uniform(0.49,0.51)
-		print 'm initial value', m
-		n = np.random.uniform(0.99,1.01)
-		print 'n initial value', n
+		# erod = np.random.uniform(8.e-5,9.e-5)
+		# print 'erod initial value', erod		
+		# m = np.random.uniform(0.49,0.51)
+		# print 'm initial value', m
+		# n = np.random.uniform(0.99,1.01)
+		# print 'n initial value', n
 
 		with file(('%s/description.txt' % (self.filename)),'a') as outfile:
 			outfile.write('\n\samples: {0}'.format(self.samples))
@@ -458,13 +489,13 @@ class Crater_MCMC():
 			# p_rain = rain
 
 			# Updating edodibility parameter and checking limits
-			# p_erod = erod + np.random.normal(0, self.step_erod)
-			# if p_erod < self.erodlimits[0]:
-			# 	p_erod = erod
-			# elif p_erod > self.erodlimits[1]:
-			# 	p_erod = erod
+			p_erod = erod + np.random.normal(0, self.step_erod)
+			if p_erod < self.erodlimits[0]:
+				p_erod = erod
+			elif p_erod > self.erodlimits[1]:
+				p_erod = erod
 
-			p_erod = erod
+			# p_erod = erod
 
 			# # Updating m parameter and checking limits
 			# p_m = m + np.random.normal(0,self.step_m)
@@ -578,7 +609,7 @@ def main():
 	muted = True
 	xmlinput = 'crater.xml'
 	simtime = 150000
-	samples = 5000
+	samples = 5
 	run_nb = 0
 	rainlimits = [0.5,4.0]
 	erodlimts = [1.e-6,1.e-4]
