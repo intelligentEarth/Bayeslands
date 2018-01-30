@@ -21,7 +21,7 @@ class xmlParser:
     This class defines XmL input file variables.
     """
 
-    def __init__(self, run_nb, muted = False, inputfile = None, makeUniqueOutputDir=True):
+    def __init__(self, inputfile = None, makeUniqueOutputDir=True):
         """
         If makeUniqueOutputDir is set, we create a uniquely-named directory for
         the output. If it's clear, we blindly accept what's in the XML file.
@@ -117,11 +117,11 @@ class xmlParser:
         self.Hillslope = False
         self.CDa = 0.
         self.CDm = 0.
+        self.Sc = 0.
         self.CDr = 0.
         self.makeUniqueOutputDir = makeUniqueOutputDir
 
         self.outDir = None
-        self.run_nb = run_nb
         self.sh5file = 'h5/sed'
         self.strath5file = 'h5/stratal.time'
 
@@ -133,8 +133,6 @@ class xmlParser:
         self.fxmffile = 'xmf/flow.time'
         self.fxdmffile = 'flow.series.xdmf'
 
-        self.muted = muted
-
         self.flexure = False
         self.ftime = None
         self.fnx = None
@@ -144,6 +142,8 @@ class xmlParser:
         self.youndMod = None
         self.elasticH = None
         self.elasticGrid = None
+        self.elasticA1 = None
+        self.elasticA2 = None
         self.flexbounds = []
 
         self.erolays = None
@@ -160,9 +160,13 @@ class xmlParser:
         self.laytime = 0.
 
         self.waveOn = False
+        self.waveSed = False
         self.tWave = None
         self.resW = None
-        self.waveBase = 10000.
+        self.waveBase = 20.
+        self.d50 = 0.0001
+        self.tsteps = 1000
+        self.dsteps = 1000
         self.waveNb = 0
         self.climNb = 0
         self.waveTime = None
@@ -173,6 +177,9 @@ class xmlParser:
         self.waveWd = None
         self.waveWdd = None
         self.waveWs = None
+        self.wCd = None
+        self.wCe = None
+        self.wEro = None
         self.waveSide = None
         self.wavelist = None
         self.climlist = None
@@ -182,6 +189,7 @@ class xmlParser:
         self.swanBot = None
         self.swanOut = None
 
+        self.carb = False
         self.carbonate = False
         self.carbGrowth = 0.
         self.carbDepth = None
@@ -190,6 +198,7 @@ class xmlParser:
         self.islandPerim = 0.
         self.coastdist = 0.
         self.baseMap = None
+        self.tCarb = None
 
         self.carbonate2 = False
         self.carbGrowth2 = 0.
@@ -198,15 +207,14 @@ class xmlParser:
         self.carbWave2 = None
         self.islandPerim2 = 0.
         self.coastdist2 = 0.
-        self.baseMap2 = None
 
         self.pelagic = False
         self.pelGrowth = 0.
         self.pelDepth = None
 
-        self._get_XmL_Data(muted = self.muted)
+        self._get_XmL_Data()
 
-    def _get_XmL_Data(self, muted = False):
+    def _get_XmL_Data(self):
         """
         Main function used to parse the XmL input file.
         """
@@ -1002,11 +1010,14 @@ class xmlParser:
                 self.CDm = float(element.text)
             else:
                 self.CDm = 0.
-            # self.CDm = self.CDa
-            # if self.CDm > self.CDa:
-            #     self.CDa = self.CDm
-            # else:
-            #     self.CDm = self.CDa
+            element = None
+            element = creep.find('cslp')
+            if element is not None:
+                self.Sc = float(element.text)
+                if self.Sc < 0.:
+                    self.Sc = 0.
+            else:
+                self.Sc = 0.
             element = None
             element = creep.find('criver')
             if element is not None:
@@ -1018,6 +1029,7 @@ class xmlParser:
             self.CDa = 0.
             self.CDm = 0.
             self.CDr = 0.
+            self.Sc = 0.
 
         # Loading erodibility layers
         erost = None
@@ -1205,6 +1217,18 @@ class xmlParser:
             else:
                 self.elasticGrid = None
             element = None
+            element = flex.find('elasticA1')
+            if element is not None:
+                self.elasticA1 = float(element.text)
+            else:
+                self.elasticA1 = None
+            element = None
+            element = flex.find('elasticA2')
+            if element is not None:
+                self.elasticA2 = float(element.text)
+            else:
+                self.elasticA2 = None
+            element = None
             element = flex.find('boundary_W')
             if element is not None:
                 self.flexbounds.append(element.text)
@@ -1233,32 +1257,46 @@ class xmlParser:
         out = None
         out = root.find('outfolder')
         if out is not None:
-            self.outDir = self.run_nb+'/'+out.text
+            self.outDir = out.text
         else:
-            self.outDir = os.getcwd()+ self.run_nb +'/' +'/out'
+            self.outDir = os.getcwd()+'/out'
+
         if self.makeUniqueOutputDir:
             if os.path.exists(self.outDir):
                 self.outDir += '_'+str(len(glob.glob(self.outDir+str('*')))-1)
 
-            if not muted:
-                os.makedirs(self.outDir)
-                os.makedirs(self.outDir+'/h5')
-                os.makedirs(self.outDir+'/xmf')
-                shutil.copy(self.inputfile,self.outDir)
+            os.makedirs(self.outDir)
+            os.makedirs(self.outDir+'/h5')
+            os.makedirs(self.outDir+'/xmf')
+            shutil.copy(self.inputfile,self.outDir)
 
         # Extract global wave field parameters
         wavefield = None
         wavefield = root.find('waveglobal')
         if wavefield is not None:
-            self.waveOn = True
+            element = None
+            element = wavefield.find('wmodel')
+            if element is not None:
+                model = int(element.text)
+                if model == 1:
+                    self.waveOn = True
+                    self.waveSed = False
+                else:
+                    self.waveOn = False
+                    self.waveSed = True
+            else:
+                self.waveOn = False
+                self.waveSed = True
             element = None
             element = wavefield.find('twave')
             if element is not None:
                 self.tWave = float(element.text)
+                if self.waveOn and Decimal(self.tEnd - self.tStart) % Decimal(self.tWave) != 0.:
+                    raise ValueError('Error in the definition of the simulation time: wave interval needs to be a multiple of simulation time.')
             else:
                 raise ValueError('Error in the definition of the simulation time: wave interval is required')
-            if Decimal(self.tEnd - self.tStart) % Decimal(self.tWave) != 0.:
-                raise ValueError('Error in the definition of the simulation time: wave interval needs to be a multiple of simulation time.')
+            if self.tWave > self.maxDT:
+                self.tWave = self.maxDT
             element = None
             element = wavefield.find('wres')
             if element is not None:
@@ -1266,10 +1304,36 @@ class xmlParser:
             else:
                 raise ValueError('Error the wave grid resolution needs to be defined')
             element = None
-            element = wavefield.find('base')
+            element = wavefield.find('wCd')
+            if element is not None:
+                self.wCd = float(element.text)
+            else:
+                self.wCd = 50.
+            element = None
+            element = wavefield.find('wCe')
+            if element is not None:
+                self.wCe = float(element.text)
+                if self.wCe > 1:
+                    self.wCe = 1.
+                if self.wCe < 0:
+                    self.wCe = 0.1
+            else:
+                self.wCe = 0.5
+            element = None
+            element = wavefield.find('wEro')
+            if element is not None:
+                self.wEro = float(element.text)
+                if self.wEro < 0:
+                    self.wEro = -self.wEro
+            else:
+                self.wEro = 0.5
+            element = None
+            element = wavefield.find('wbase')
             if element is not None:
                 self.waveBase = float(element.text)
             else:
+                self.waveBase = 20.
+            if self.waveOn:
                 self.waveBase = 100000.
             element = None
             element = wavefield.find('events')
@@ -1277,6 +1341,24 @@ class xmlParser:
                 self.waveNb = int(element.text)
             else:
                 raise ValueError('The number of wave temporal events needs to be defined.')
+            element = None
+            element = wavefield.find('d50')
+            if element is not None:
+                self.d50 = float(element.text)
+            else:
+                self.d50 = 0.0001
+            element = None
+            element = wavefield.find('tsteps')
+            if element is not None:
+                self.tsteps = int(element.text)
+            else:
+                self.tsteps = 1000
+            element = None
+            element = wavefield.find('dsteps')
+            if element is not None:
+                self.dsteps = int(element.text)
+            else:
+                self.dsteps = 1000
         else:
             self.waveNb = 0
             self.tWave = self.tEnd - self.tStart + 10000.
@@ -1284,17 +1366,20 @@ class xmlParser:
         # Extract wave field structure information
         if self.waveNb > 0:
             tmpNb = self.waveNb
-            self.waveWd = []
-            self.waveWu = []
+            if self.waveOn:
+                self.waveWu = []
+                self.waveWp = []
+                self.waveWdd = []
+                self.waveWs = []
+                self.waveSide = []
             self.waveWh = []
-            self.waveWp = []
-            self.waveWdd = []
-            self.waveWs = []
-            self.waveSide = []
             self.wavePerc = []
+            self.waveWd = []
+
             self.waveTime = numpy.empty((tmpNb,2))
             self.climNb = numpy.empty(tmpNb, dtype=int)
             w = 0
+
             for wavedata in root.iter('wave'):
                 if w >= tmpNb:
                     raise ValueError('Wave event number above number defined in global wave structure.')
@@ -1303,10 +1388,10 @@ class xmlParser:
                     element = wavedata.find('start')
                     if element is not None:
                         self.waveTime[w,0] = float(element.text)
-                        if w > 0 and self.waveTime[w,0] != self.waveTime[w-1,1]:
-                            raise ValueError('The start time of the wave field %d needs to match the end time of previous wave data.'%w)
-                        if w == 0 and self.waveTime[w,0] != self.tStart:
-                            raise ValueError('The start time of the first wave field needs to match the simulation start time.')
+                        # if w > 0 and self.waveTime[w,0] != self.waveTime[w-1,1]:
+                        #     raise ValueError('The start time of the wave field %d needs to match the end time of previous wave data.'%w)
+                        # if w == 0 and self.waveTime[w,0] != self.tStart:
+                        #     raise ValueError('The start time of the first wave field needs to match the simulation start time.')
                     else:
                         raise ValueError('Wave event %d is missing start time argument.'%w)
                     element = None
@@ -1324,18 +1409,23 @@ class xmlParser:
                     else:
                         raise ValueError('Wave event %d is missing climatic wave number argument.'%w)
 
-                    if Decimal(self.waveTime[w,1]-self.waveTime[w,0]) % Decimal(self.tWave) != 0.:
+                    if self.waveOn and Decimal(self.waveTime[w,1]-self.waveTime[w,0]) % Decimal(self.tWave) != 0.:
                         raise ValueError('Wave event %d duration need to be a multiple of the wave interval.'%w)
 
+                    if self.waveSed and Decimal(self.waveTime[w,1]-self.waveTime[w,0]) % Decimal(self.maxDT) != 0.:
+                        raise ValueError('Wave event %d duration need to be a multiple of the wave interval.'%w)
+
+                    if self.waveOn:
+                        listWu = []
+                        listWp = []
+                        listWs = []
+                        listWdd = []
+                        listWside = []
+                        listBreak = []
                     listPerc = []
-                    listWu = []
                     listWd = []
                     listWh = []
-                    listWp = []
-                    listWs = []
-                    listWdd = []
-                    listWside = []
-                    listBreak = []
+
                     id = 0
                     sumPerc = 0.
                     for clim in wavedata.iter('climate'):
@@ -1361,14 +1451,6 @@ class xmlParser:
                         else:
                             listWh.append(0.001)
                         element = None
-                        element = clim.find('per')
-                        if element is not None:
-                            listWp.append(float(element.text))
-                            if listWp[id] <= 0:
-                                raise ValueError('Wave event %d wave period cannot be negative.'%w)
-                        else:
-                            listWp.append(30.)
-                        element = None
                         element = clim.find('dir')
                         if element is not None:
                             listWd.append(float(element.text))
@@ -1378,56 +1460,68 @@ class xmlParser:
                                 raise ValueError('Wave event %d wave direction needs to be set between 0 and 360.'%w)
                         else:
                             listWd.append(0.)
-                        element = None
-                        element = clim.find('windv')
-                        if element is not None:
-                            listWu.append(float(element.text))
-                            if listWu[id] < 0:
-                                raise ValueError('Wave event %d wind velocity cannot be negative.'%w)
-                        else:
-                            listWu.append(0.)
-                        element = None
-                        element = clim.find('wdir')
-                        if element is not None:
-                            listWdd.append(float(element.text))
-                            if listWdd[id] < 0:
-                                raise ValueError('Wave event %d wind direction needs to be set between 0 and 360.'%w)
-                            if listWdd[id] > 360:
-                                raise ValueError('Wave event %d wind direction needs to be set between 0 and 360.'%w)
-                        else:
-                            listWdd.append(0.)
-                        element = None
-                        element = clim.find('spread')
-                        if element is not None:
-                            listWs.append(float(element.text))
-                            if listWs[id] < 0:
-                                raise ValueError('Wave event %d spreading angle needs to be set between 0 and 360.'%w)
-                            if listWs[id] > 360:
-                                raise ValueError('Wave event %d spreading angle needs to be set between 0 and 360.'%w)
-                        else:
-                            listWs.append(0.)
-                        element = None
-                        element = clim.find('side')
-                        if element is not None:
-                            listWside.append(int(element.text))
-                            if listWside[id] > 8:
-                                raise ValueError('Wave boundary side is between 1 and 8.')
-                        else:
-                            listWside[id]=1
+
+                        if self.waveOn:
+                            element = None
+                            element = clim.find('per')
+                            if element is not None:
+                                listWp.append(float(element.text))
+                                if listWp[id] <= 0:
+                                    raise ValueError('Wave event %d wave period cannot be negative.'%w)
+                            else:
+                                listWp.append(30.)
+                            element = None
+                            element = clim.find('windv')
+                            if element is not None:
+                                listWu.append(float(element.text))
+                                if listWu[id] < 0:
+                                    raise ValueError('Wave event %d wind velocity cannot be negative.'%w)
+                            else:
+                                listWu.append(0.)
+                            element = None
+                            element = clim.find('wdir')
+                            if element is not None:
+                                listWdd.append(float(element.text))
+                                if listWdd[id] < 0:
+                                    raise ValueError('Wave event %d wind direction needs to be set between 0 and 360.'%w)
+                                if listWdd[id] > 360:
+                                    raise ValueError('Wave event %d wind direction needs to be set between 0 and 360.'%w)
+                            else:
+                                listWdd.append(0.)
+                            element = None
+                            element = clim.find('spread')
+                            if element is not None:
+                                listWs.append(float(element.text))
+                                if listWs[id] < 0:
+                                    raise ValueError('Wave event %d spreading angle needs to be set between 0 and 360.'%w)
+                                if listWs[id] > 360:
+                                    raise ValueError('Wave event %d spreading angle needs to be set between 0 and 360.'%w)
+                            else:
+                                listWs.append(0.)
+                            element = None
+                            element = clim.find('side')
+                            if element is not None:
+                                listWside.append(int(element.text))
+                                if listWside[id] > 8:
+                                    raise ValueError('Wave boundary side is between 1 and 8.')
+                            else:
+                                listWside[id]=1
                         id += 1
+
                     w += 1
                     self.wavePerc.append(listPerc)
-                    self.waveWu.append(listWu)
                     self.waveWd.append(listWd)
-                    self.waveWdd.append(listWdd)
-                    self.waveWs.append(listWs)
                     self.waveWh.append(listWh)
-                    self.waveWp.append(listWp)
-                    self.waveSide.append(listWside)
+                    if self.waveOn:
+                        self.waveWu.append(listWu)
+                        self.waveWdd.append(listWdd)
+                        self.waveWs.append(listWs)
+                        self.waveWp.append(listWp)
+                        self.waveSide.append(listWside)
                 else:
                     raise ValueError('Wave event %d is missing.'%w)
 
-        # Construct a list of climatic events for swan model
+        # Construct a list of climatic events for swan/wavesed model
         if self.waveOn:
             self.wavelist = []
             self.climlist = []
@@ -1448,12 +1542,36 @@ class xmlParser:
             self.climlist.append(self.climlist[-1])
 
             # Create swan model repository and files
-            if self.waveOn:
-                os.makedirs(self.outDir+'/swan')
-                self.swanFile = numpy.array(self.outDir+'/swan/swan.swn')
-                self.swanInfo = numpy.array(self.outDir+'/swan/swanInfo.swn')
-                self.swanBot = numpy.array(self.outDir+'/swan/swan.bot')
-                self.swanOut = numpy.array(self.outDir+'/swan/swan.csv')
+            os.makedirs(self.outDir+'/swan')
+            self.swanFile = numpy.array(self.outDir+'/swan/swan.swn')
+            self.swanInfo = numpy.array(self.outDir+'/swan/swanInfo.swn')
+            self.swanBot = numpy.array(self.outDir+'/swan/swan.bot')
+            self.swanOut = numpy.array(self.outDir+'/swan/swan.csv')
+
+        # Carbonate parameters
+        carbp = None
+        carbp = root.find('carb')
+        if carbp is not None:
+            self.carb = True
+            element = None
+            element = carbp.find('baseMap')
+            if element is not None:
+                self.baseMap = element.text
+                if not os.path.isfile(self.baseMap):
+                    raise ValueError('Basement map file for species1 growth is missing or the given path is incorrect.')
+            element = carbp.find('tcarb')
+            if element is not None:
+                self.tCarb = element.text
+                if Decimal(self.tEnd - self.tStart) % Decimal(self.tCarb) != 0.:
+                    raise ValueError('Error in the definition of the simulation time: carbonate interval needs to be a multiple of simulation time.')
+            else:
+                raise ValueError('Error in the definition of the simulation time: carbonate interval is required')
+            if self.tCarb > self.maxDT:
+                self.tCarb = self.maxDT
+            if self.tCarb > self.tWave:
+                self.tCarb = self.tWave
+            else:
+                self.tWave = self.tCarb
 
         # Species 1 class
         carb = None
@@ -1497,13 +1615,6 @@ class xmlParser:
                 self.coastdist = float(element.text)
             else:
                 self.coastdist = 0.
-            element = carb.find('bedMap')
-            if element is not None:
-                self.baseMap = element.text
-                if not os.path.isfile(self.baseMap):
-                    raise ValueError('Basement map file for species1 growth is missing or the given path is incorrect.')
-            else:
-                self.baseMap = None
 
         # Species 2 class
         carb2 = None
@@ -1547,13 +1658,6 @@ class xmlParser:
                 self.coastdist2 = float(element.text)
             else:
                 self.coastdist2 = 0.
-            element = carb2.find('bedMap')
-            if element is not None:
-                self.baseMap2 = element.text
-                if not os.path.isfile(self.baseMap2):
-                    raise ValueError('Basement map file for species2 growth is missing or the given path is incorrect.')
-            else:
-                self.baseMap2 = None
 
         # Pelagic class
         pelagic = None

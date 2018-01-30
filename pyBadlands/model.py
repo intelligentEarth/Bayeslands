@@ -3,7 +3,7 @@ import numpy as np
 import mpi4py.MPI as mpi
 
 from scipy.spatial import cKDTree
-from pyBadlands import (diffLinear, flowNetwork, buildMesh, oceanDyn,
+from pyBadlands import (diffLinear, flowNetwork, buildMesh, waveSed,  #oceanDyn,
                         checkPoints, buildFlux, xmlParser, carbGrowth,
                         pelagicGrowth)
 
@@ -13,7 +13,7 @@ import os
 import pstats
 import StringIO
 
-from pyBadlands.libUtils  import simswan as swan
+#from pyBadlands.libUtils  import simswan as swan
 
 class Model(object):
     """State object for the pyBadlands model."""
@@ -28,6 +28,7 @@ class Model(object):
         self.waveID = 0
         self.outputStep = 0
         self.disp = None
+        self.prop = None
         self.carbval = None
         self.carbval2 = None
         self.pelaval = None
@@ -38,12 +39,7 @@ class Model(object):
         self._comm = mpi.COMM_WORLD
         self.fcomm = mpi.COMM_WORLD.py2f()
 
-        self.initial_erod = []
-        self.initial_rain = []
-        self.opt_erod = []
-        self.opt_rain = []
-
-    def load_xml(self, run_nb, filename, verbose=False, muted = False):
+    def load_xml(self, filename, verbose=False):
         """
         Load an XML configuration file.
 
@@ -59,7 +55,7 @@ class Model(object):
         np.seterr(divide='ignore',invalid='ignore')
 
         # Only the first node should create a unique output dir
-        self.input = xmlParser.xmlParser(run_nb,muted,filename, makeUniqueOutputDir=(self._rank == 0))
+        self.input = xmlParser.xmlParser(filename, makeUniqueOutputDir=(self._rank == 0))
         self.tNow = self.input.tStart
 
         # Sync the chosen output dir to all nodes
@@ -80,21 +76,14 @@ class Model(object):
 
         # Initialise carbonate evolution if any
         if self.input.carbonate:
-            self.carb = carbGrowth.carbGrowth(self.input, self.recGrid.regX, self.recGrid.regY, self.recGrid.boundsPt)
+            self.carb = carbGrowth.carbGrowth(self.input, self.recGrid.regX, self.recGrid.regY,
+                                              self.carbTIN.tinBase)
             if self.input.coastdist>0.:
                 self.carb.buildReg(self.FVmesh.node_coords[:,:2])
-            if self.carb.baseMap is not None:
-                self.carb.build_basement(self.FVmesh.node_coords[:,:2],1)
-            if self.carb.baseMap2 is not None:
-                self.carb.build_basement(self.FVmesh.node_coords[:,:2],2)
 
         # Initialise pelagic evolution if any
         if self.input.pelagic:
             self.pelagic = pelagicGrowth.pelagicGrowth(self.input)
-
-        self.prop = np.zeros((self.totPts,4))
-
-        return self.initial_erod, self.initial_rain
 
     def build_mesh(self, filename, verbose):
         # Construct Badlands mesh and grid to run simulation
@@ -102,12 +91,18 @@ class Model(object):
         self.inGIDs, self.totPts, self.elevation, self.cumdiff, self.cumhill, self.cumflex, self.strata, self.mapero, \
         self.tinFlex, self.flex, self.wave, self.straTIN, self.carbTIN = buildMesh.construct_mesh(self.input, filename, verbose)
 
+        if self.input.waveSed:
+            self.wavediff = np.zeros((self.totPts))
+        else:
+            self.wavediff = None
+
         # Define hillslope parameters
         self.rain = np.zeros(self.totPts, dtype=float)
         self.hillslope = diffLinear()
         self.hillslope.CDaerial = self.input.CDa
         self.hillslope.CDmarine = self.input.CDm
         self.hillslope.CDriver = self.input.CDr
+        self.hillslope.Sc = self.input.Sc
         self.hillslope.updatedt = 0
 
         # Define flow parameters
@@ -138,7 +133,19 @@ class Model(object):
             self.wave.build_tree(self.FVmesh.node_coords[:,:2])
             self.wave.swan_init(self.input, self.elevation, self.waveID, self.force.sealevel)
         else:
-            self.force.next_wave = self.input.tEnd + 1.e5
+            if self.input.waveSed:
+                self.force.next_wave = self.input.tStart + self.input.tWave
+            else:
+                self.force.next_wave = self.input.tEnd + 1.e5
+
+        if self.input.carb:
+            self.force.next_carb = self.input.tStart + self.input.tCarb
+            self.oldsed = np.zeros(len(self.elevation))
+            if self.carbTIN is not None:
+                self.prop = np.zeros((self.totPts,self.carbTIN.nbSed))
+        else:
+            self.force.next_carb = self.input.tEnd + 1.e5
+            self.prop = np.zeros((self.totPts,1))
 
     def rebuild_mesh(self, verbose=False):
         """
@@ -182,14 +189,14 @@ class Model(object):
         else:
             self.flow.erodibility = self.mapero.erodibility
 
+        # Update Wavesed grid interpolation
+        if self.input.waveSed:
+            wave.build_tree(self.FVmesh.node_coords[:,:2])
+
         # Update Carbonate mesh
-        if self.input.carbonate:
-            if self.input.coastdist>0.:
-                self.carb.buildReg(self.FVmesh.node_coords[:,:2])
-            if self.carb.baseMap is not None:
-                self.carb.build_basement(self.FVmesh.node_coords[:,:2],1)
-            if self.carb.baseMap2 is not None:
-                self.carb.build_basement(self.FVmesh.node_coords[:,:2],2)
+        #if self.input.carbonate:
+        #    if self.input.coastdist>0.:
+        #        self.carb.buildReg(self.FVmesh.node_coords[:,:2])
 
         self.flow.xycoords = self.FVmesh.node_coords[:, :2]
         self.flow.xgrid = None
@@ -200,9 +207,9 @@ class Model(object):
         self.carbval = None
         self.carbval2 = None
         self.pelaval = None
-        self.prop = np.zeros((self.totPts,4))
+        self.prop = np.zeros((self.totPts,1))
 
-    def run_to_time(self, tEnd, profile=False, verbose=False, muted = False):
+    def run_to_time(self, tEnd, profile=False, verbose=False):
         """
         Run the simulation to a specified point in time (tEnd).
 
@@ -320,9 +327,9 @@ class Model(object):
                             vKe = self.mapero.Ke
                             vTh = self.mapero.thickness
                         # Apply horizontal displacements
-                        self.recGrid.tinMesh, self.elevation, self.cumdiff, self.cumhill, fcum, scum, Ke, Th = self.force.apply_XY_dispacements(
-                            self.recGrid.areaDel, self.fixIDs, self.elevation, self.cumdiff, self.cumhill, tflex=flexiso, scum=sload, Te=vTh,
-                            Ke=vKe, flexure=fflex, strat=fstrat, ero=fero)
+                        self.recGrid.tinMesh, self.elevation, self.cumdiff, self.cumhill, self.wavediff, fcum, scum, Ke, Th = self.force.apply_XY_dispacements(
+                            self.recGrid.areaDel, self.fixIDs, self.elevation, self.cumdiff, self.cumhill, self.wavediff,
+                            tflex=flexiso, scum=sload, Te=vTh,Ke=vKe, flexure=fflex, strat=fstrat, ero=fero)
                         # Update relevant parameters in deformed TIN
                         if fflex == 1:
                             self.cumflex = fcum
@@ -353,15 +360,78 @@ class Model(object):
                 if self._rank == 0:
                     print "   - Compute flexural isostasy ", time.clock() - flextime
 
-            # Update wave parameters
-            if self.input.waveOn:
-                if self.force.next_wave <= self.tNow:
-                    # Compute wave field and associated bottom current conditions
-                    self.waveID = self.wave.swan_run(self.input, self.force, self.elevation, self.waveID)
-                    # Update next wave time step
-                    self.force.next_wave += self.input.tWave
-                    if self.tNow == self.input.tStart:
-                        self.force.average_wave()
+            # Compute wavesed parameters
+            if self.tNow >= self.force.next_wave:
+                wavetime = time.clock()
+                if self.carbTIN is not None:
+                    # Update erosion/deposition due to SPM processes on carbTIN
+                    self.carbTIN.update_layers(self.cumdiff-self.oldsed,self.elevation)
+                    self.carbTIN.get_active_layer(self.input.wEro)
+                    actlay = self.carbTIN.alay
+                else:
+                    actlay = None
+                # Compute wave field and associated bottom current conditions
+                waveED,nactlay = self.wave.compute_wavesed(self.tNow, self.input, self.force,
+                                                   self.elevation, actlay)
+                # Update elevation / cumulative changes based on wave-induced sediment transport
+                self.elevation += waveED
+                self.cumdiff  += waveED
+                self.wavediff  += waveED
+                if self._rank == 0:
+                    print "   - Compute wave-induced sediment transport ", time.clock() - wavetime
+                # Update carbonate active layer
+                if nactlay is not None:
+                    self.carbTIN.update_active_layer(nactlay,self.elevation)
+                # Update next wave time step
+                self.force.next_wave += self.input.tWave
+
+            # Compute carbonate evolution
+            if self.tNow >= self.force.next_carb:
+                carbtime = time.clock()
+                depth = self.elevation-self.force.sealevel
+                if self.carbTIN is not None:
+                    # Update erosion/deposition due to river and diffusion on carbTIN
+                    self.carbTIN.update_layers(self.cumdiff-self.oldsed,self.elevation)
+                # Compute reef growth
+                if self.input.carbonate:
+                    self.carbval, self.carbval2 = self.carb.computeCarbonate(self.force.meanH, self.cumdiff-self.oldsed,
+                                                            depth, self.input.tCarb)
+                    if self.carbval2 is not None:
+                        self.cumdiff +=  self.carbval + self.carbval2
+                        self.elevation += self.carbval + self.carbval2
+                    else:
+                        self.cumdiff +=  self.carbval
+                        self.elevation += self.carbval
+                    if self.carbTIN is not None:
+                        self.carbTIN.paleoDepth[:,self.carbTIN.step] = self.elevation
+                        self.carbTIN.depoThick[:,self.carbTIN.step,1] += self.carbval
+                        self.carbTIN.layerThick[:,self.carbTIN.step] += self.carbval
+                        if self.carbval2 is not None:
+                            self.carbTIN.depoThick[:,self.carbTIN.step,2] += self.carbval2
+                            self.carbTIN.layerThick[:,self.carbTIN.step] += self.carbval2
+                # Compute pelagic rain
+                if self.input.pelagic:
+                    self.pelaval = self.pelagic.computePelagic(depth, self.input.tCarb)
+                    self.cumdiff +=  self.pelaval
+                    self.elevation += self.pelaval
+                    if self.carbTIN is not None:
+                        self.carbTIN.paleoDepth[:,self.carbTIN.step] = self.elevation
+                        self.carbTIN.depoThick[:,self.carbTIN.step,0] += self.pelaval
+                        self.carbTIN.layerThick[:,self.carbTIN.step] += self.pelaval
+                # Update proportion based on top layer
+                if self.prop is not None:
+                    ids = np.where(self.carbTIN.layerThick[:,self.carbTIN.step]>0.)[0]
+                    self.prop[ids,0] = self.carbTIN.depoThick[ids,self.carbTIN.step,0]/self.carbTIN.layerThick[ids,self.carbTIN.step]
+                    if self.input.carbonate:
+                        self.prop[ids,1] = self.carbTIN.depoThick[ids,self.carbTIN.step,1]/self.carbTIN.layerThick[ids,self.carbTIN.step]
+                        if self.carbval2 is not None:
+                            self.prop[ids,2] = self.carbTIN.depoThick[ids,self.carbTIN.step,2]/self.carbTIN.layerThick[ids,self.carbTIN.step]
+
+                # Update current cumulative erosion deposition
+                self.oldsed = np.copy(self.cumdiff)
+                self.force.next_carb += self.input.tCarb
+                if self._rank == 0:
+                    print "   - Compute carbonate growth ", time.clock() - carbtime
 
             # Compute stream network
             self.fillH, self.elevation = buildFlux.streamflow(self.input, self.FVmesh, self.recGrid, self.force, self.hillslope, \
@@ -371,23 +441,20 @@ class Model(object):
             if self.tNow >= self.force.next_display:
                 if self.force.next_display > self.input.tStart:
                     outStrata = 1
-                if not muted:
-                    checkPoints.write_checkpoints(self.input, self.recGrid, self.lGIDs, self.inIDs, self.tNow,
-                                                self.FVmesh, self.tMesh, self.force, self.flow, self.rain,
-                                                self.elevation, self.fillH, self.cumdiff, self.cumhill,
-                                                self.outputStep, self.prop, self.mapero, self.cumflex)
+                checkPoints.write_checkpoints(self.input, self.recGrid, self.lGIDs, self.inIDs, self.tNow,
+                                            self.FVmesh, self.tMesh, self.force, self.flow, self.rain,
+                                            self.elevation, self.fillH, self.cumdiff, self.cumhill, self.wavediff,
+                                            self.outputStep, self.prop, self.mapero, self.cumflex)
 
                 if self.straTIN is not None and self.outputStep % self.input.tmesh==0:
                     meshtime = time.clock()
-                    if not muted:
-                        self.straTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep,self._rank)
+                    self.straTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep,self._rank)
                     if self._rank == 0:
                         print "   - Write sediment mesh output", time.clock() - meshtime
 
                 if self.carbTIN is not None and self.outputStep % self.input.tmesh==0:
                     meshtime = time.clock()
-                    if not muted:
-                        self.carbTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep,self._rank)
+                    self.carbTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep,self._rank)
                     if self._rank == 0:
                         print "   - Write carbonate mesh output", time.clock() - meshtime
 
@@ -410,54 +477,27 @@ class Model(object):
 
             # Get the maximum time before updating one of the above processes / components
             tStop = min([self.force.next_display, self.force.next_layer, self.force.next_flexure,
-                        tEnd, self.force.next_wave, self.force.next_disp, self.force.next_rain])
-
-            # Compute sediment transport up to tStop
-            if self.input.carbonate or self.input.pelagic:
-                oldsed = np.copy(self.cumdiff)
-                oldtime = np.copy(self.tNow)
+                        tEnd, self.force.next_wave, self.force.next_disp, self.force.next_rain,
+                        self.force.next_carb])
 
             self.tNow, self.elevation, self.cumdiff, self.cumhill = buildFlux.sediment_flux(self.input, self.recGrid, self.hillslope, \
                               self.FVmesh, self.tMesh, self.flow, self.force, self.rain, self.lGIDs, self.applyDisp, self.straTIN, self.mapero,  \
                               self.cumdiff, self.cumhill, self.fillH, self.disp, self.inGIDs, self.elevation, self.tNow, tStop, verbose)
-            # Compute carbonate evolution
-            if self.input.carbonate:
-                if self.input.waveOn:
-                    self.force.average_wave()
-                dh = self.elevation-self.force.sealevel
-                self.carbval, self.carbval2 = self.carb.computeCarbonate(self.force.meanH, self.cumdiff-oldsed, dh, self.tNow-oldtime)
-                if self.carbval2 is None:
-                    self.carbval2 = np.zeros(self.totPts, dtype=float)
-            elif self.carbval is None:
-                if self.input.waveOn:
-                    self.force.average_wave()
-                self.carbval = np.zeros(self.totPts, dtype=float)
-                if self.carbval2 is None:
-                    self.carbval2 = np.zeros(self.totPts, dtype=float)
-            else:
-                if self.input.waveOn:
-                    self.force.average_wave()
-
-            # Compute pelagic evolution
-            if self.input.pelagic:
-                self.pelaval = self.pelagic.computePelagic(self.elevation-self.force.sealevel, self.tNow-oldtime)
-            elif self.pelaval is None:
-                self.pelaval = np.zeros(self.totPts, dtype=float)
 
             # Update carbonate/pelagic stratigraphic layers
-            if self.input.carbonate or self.input.pelagic:
-                self.prop.fill(0.)
-                self.carbTIN.update_layers(self.cumdiff-oldsed,self.carbval,self.carbval2,self.pelaval,self.elevation)
-                ids = np.where(self.cumdiff>oldsed)[0]
-                tmpsum = self.carbval+self.carbval2+self.pelaval
-                tmpsum[ids] += self.cumdiff[ids]-oldsed[ids]
-                ids2 = np.where(tmpsum>0.)[0]
-                self.prop[ids,0] = (self.cumdiff[ids]-oldsed[ids]) / tmpsum[ids]
-                self.prop[ids2,1] = self.carbval[ids2] / tmpsum[ids2]
-                self.prop[ids2,2] = self.carbval2[ids2] / tmpsum[ids2]
-                self.prop[ids2,3] = self.pelaval[ids2] / tmpsum[ids2]
-                self.cumdiff += self.pelaval + self.carbval + self.carbval2
-                self.elevation += self.pelaval + self.carbval + self.carbval2
+            # if self.carbTIN is not None:
+            #     self.prop.fill(0.)
+            #     self.carbTIN.update_layers(self.cumdiff-oldsed,self.carbval,self.carbval2,self.pelaval,self.elevation)
+            #     ids = np.where(self.cumdiff>oldsed)[0]
+            #     tmpsum = self.carbval+self.carbval2+self.pelaval
+            #     tmpsum[ids] += self.cumdiff[ids]-oldsed[ids]
+            #     ids2 = np.where(tmpsum>0.)[0]
+            #     self.prop[ids,0] = (self.cumdiff[ids]-oldsed[ids]) / tmpsum[ids]
+            #     self.prop[ids2,1] = self.carbval[ids2] / tmpsum[ids2]
+            #     self.prop[ids2,2] = self.carbval2[ids2] / tmpsum[ids2]
+            #     self.prop[ids2,3] = self.pelaval[ids2] / tmpsum[ids2]
+            #     self.cumdiff += self.pelaval + self.carbval + self.carbval2
+            #     self.elevation += self.pelaval + self.carbval + self.carbval2
 
         tloop = time.clock() - last_time
         if self._rank == 0:
@@ -482,20 +522,16 @@ class Model(object):
 
         # Create checkpoint files and write HDF5 output
         if self.input.udw == 0 or self.tNow == self.input.tEnd or self.tNow == self.force.next_display:
-            if not muted:
-                checkPoints.write_checkpoints(self.input, self.recGrid, self.lGIDs, self.inIDs, self.tNow, \
-                                    self.FVmesh, self.tMesh, self.force, self.flow, self.rain, \
-                                    self.elevation, self.fillH, self.cumdiff, self.cumhill, self.outputStep, \
-                                    self.prop, self.mapero, self.cumflex)
+            checkPoints.write_checkpoints(self.input, self.recGrid, self.lGIDs, self.inIDs, self.tNow, \
+                                self.FVmesh, self.tMesh, self.force, self.flow, self.rain, \
+                                self.elevation, self.fillH, self.cumdiff, self.cumhill, self.wavediff, \
+                                self.outputStep, self.prop, self.mapero, self.cumflex)
             self.force.next_display += self.input.tDisplay
             self.outputStep += 1
             if self.straTIN is not None:
-                print 'Processing'
-                if not muted:
-                    self.straTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep-1,self._rank)
+                self.straTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep-1,self._rank)
             if self.carbTIN is not None:
-                if not muted:
-                    self.carbTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep-1,self._rank)
+                self.carbTIN.write_hdf5_stratigraphy(self.lGIDs,self.outputStep-1,self._rank)
                 self.carbTIN.step += 1
 
         # Update next stratal layer time

@@ -146,12 +146,11 @@ contains
 
     real(kind=8),dimension(pydnodes) :: elev, seadep, newelev
 
-    integer :: it, s, m, n, p, k, pid, nid, id, nup, ndown, ngbh(20)
+    integer :: it, s, m, n, p, k, pid, nid, id
     real(kind=8) :: dh, vol, minz, maxz
 
     dnodes = pydnodes
     elev = elevation
-
     do s = 1, pyRockNb
       newelev = elev
       do m = 1, diffnbmax
@@ -197,20 +196,15 @@ contains
               if(seadep(id)>0.)then
                 minz = elev(id)
                 nid = 0
-                nup = 0
-                ndown = 0
                 maxz = -1.e8
                 loop: do p = 1, 20
                   if( neighbours(id,p) < 0 ) exit loop
-                  ndown = ndown + 1
-                  ngbh(ndown) = neighbours(id,p)+1
                   if(minz>elev(neighbours(id,p)+1))then
                     nid = neighbours(id,p)+1
                     minz = elev(nid)
                   endif
                   if(maxz<elev(neighbours(id,p)+1))then
                     maxz = elev(neighbours(id,p)+1)
-                    nup = neighbours(id,p)+1
                   endif
                 enddo loop
                 if(nid==0)then
@@ -220,10 +214,15 @@ contains
                     seadep(id) = seadep(id) - dh*area(id)
                     pid = depIDs(k)+1
                     nid = depIDs(k)+1
-                    seadep(nid) = seadep(nid)+seadep(id)
-                    seadep(id) = 0.
-                    id = nid
                     it = 0
+                    if(nid == id)then
+                      seadep(nid) = seadep(id)
+                    else
+                      seadep(nid) = seadep(nid)+seadep(id)
+                      seadep(id) = 0.
+                    endif
+                    n = depIDs(k)+1
+                    id = n
                   else
                     elev(id) = elev(id) + seadep(id)/area(id)
                     seadep(id) = 0.
@@ -342,6 +341,8 @@ contains
       alayh = 0.
       lid = nbLay
       if(cumh<=alay(n))then
+        alayh = cumh
+        alayS(n,:) = laySD(n,nbLay,:)
         lp: do k = nbLay-1,1,-1
           cumh = cumh+layTH(n,k)
           ! Store stratal thicknesses lower than active layer thickness
@@ -373,6 +374,59 @@ contains
     return
 
   end subroutine getactlay
+
+  subroutine getactlay2(alay,layTH,laySD,alayS,nbPts,nbLay,nbSed)
+
+    integer :: nbPts
+    integer :: nbLay
+    integer :: nbSed
+    real(kind=8),intent(in) :: alay
+    real(kind=8),dimension(nbPts,nbLay),intent(in) :: layTH
+    real(kind=8),dimension(nbPts,nbLay,nbSed),intent(in) :: laySD
+    real(kind=8),dimension(nbPts,nbSed),intent(out) :: alayS
+
+    integer :: n,k,s,lid
+    real(kind=8) :: cumh,alayh,prop
+
+    alayS = 0.
+    do n = 1, nbPts
+      ! Compute cumulative stratal thicknesses
+      cumh = layTH(n,nbLay)
+      alayh = 0.
+      lid = nbLay
+      if(cumh<=alay)then
+        alayh = cumh
+        alayS(n,:) = laySD(n,nbLay,:)
+        lp: do k = nbLay-1,1,-1
+          cumh = cumh+layTH(n,k)
+          ! Store stratal thicknesses lower than active layer thickness
+          if(alay>=cumh)then
+            alayh = cumh
+            do s = 1, nbSed
+              alayS(n,s) = alayS(n,s)+laySD(n,k,s)
+            enddo
+          else
+            lid = k
+            exit lp
+          endif
+        enddo lp
+      endif
+      ! Find the proportion of sediment that still needs to be passed to the active layer
+      if(layTH(n,lid)>0.)then
+        prop = (alay-alayh)/layTH(n,lid)
+        prop = min(prop,1.)
+        prop = max(prop,0.)
+        if(prop>0.)then
+          do s = 1, nbSed
+            alayS(n,s) = alayS(n,s)+prop*laySD(n,lid,s)
+          enddo
+        endif
+      endif
+    enddo
+
+    return
+
+  end subroutine getactlay2
 
   subroutine updatestrati(layS,layH,eros,depo,newH,newS,nbPts,nbLay,nbSed)
 
@@ -423,14 +477,58 @@ contains
 
   end subroutine updatestrati
 
-  subroutine stratcarb(layS,layH,clastic,carb,carb2,pel,newH,newS,nbPts,nbLay,nbSed)
+  subroutine updatecstrati(layS,layH,eros,depo,newH,newS,nbPts,nbLay,nbSed)
 
     integer :: nbPts
     integer :: nbLay
     integer :: nbSed
-    real(kind=8),dimension(nbPts),intent(in) :: pel
-    real(kind=8),dimension(nbPts),intent(in) :: carb
-    real(kind=8),dimension(nbPts),intent(in) :: carb2
+    real(kind=8),dimension(nbPts),intent(in) :: eros
+    real(kind=8),dimension(nbPts),intent(in) :: depo
+    real(kind=8),dimension(nbPts,nbLay),intent(in) :: layH
+    real(kind=8),dimension(nbPts,nbLay,nbSed),intent(in) :: layS
+
+    real(kind=8),dimension(nbPts,nbLay),intent(out) :: newH
+    real(kind=8),dimension(nbPts,nbLay),intent(out) :: newS
+
+    integer :: n,k
+    real(kind=8) :: ero,dep
+
+    newS = layS(:,:,1)
+    newH = layH
+
+    do n = 1, nbPts
+      ero = -eros(n)
+      dep = depo(n)
+      if(ero>0.)then
+        lp: do k = nbLay,1,-1
+          if(newS(n,k)>0.)then
+            if(newS(n,k)>=ero)then
+              newS(n,k) = newS(n,k) - ero
+              newH(n,k) = newH(n,k) - ero
+              exit lp
+            else
+              ero = ero - newS(n,k)
+              newH(n,k) = newH(n,k) - newS(n,k)
+              newS(n,k) = 0.
+            endif
+          endif
+        enddo lp
+      endif
+      if(dep>0.)then
+        newH(n,nbLay) = newH(n,nbLay) + dep
+        newS(n,nbLay) = newS(n,nbLay) + dep
+      endif
+    enddo
+
+    return
+
+  end subroutine updatecstrati
+
+  subroutine stratcarb(layS,layH,clastic,newH,newS,nbPts,nbLay,nbSed)
+
+    integer :: nbPts
+    integer :: nbLay
+    integer :: nbSed
     real(kind=8),dimension(nbPts),intent(in) :: clastic
     real(kind=8),dimension(nbPts,nbLay),intent(in) :: layH
     real(kind=8),dimension(nbPts,nbLay,nbSed),intent(in) :: layS
@@ -449,7 +547,7 @@ contains
         ero = -clastic(n)
         lp: do k = nbLay,1,-1
           if(newH(n,k)>ero)then
-            do s = 1, 3
+            do s = 1, nbSed
               if(newS(n,k,s)>=ero)then
                 newS(n,k,s) = newS(n,k,s) - ero
                 newH(n,k) = newH(n,k) - ero
@@ -463,25 +561,13 @@ contains
           else
             ero = ero - newH(n,k)
             newH(n,k) = 0.
-            newS(n,k,1:3) = 0.
+            newS(n,k,1:nbSed) = 0.
           endif
         enddo lp
       endif
       if(clastic(n)>0.)then
         newH(n,nbLay) = newH(n,nbLay) + clastic(n)
         newS(n,nbLay,1) = newS(n,nbLay,1) + clastic(n)
-      endif
-      if(carb(n)>0.)then
-        newH(n,nbLay) = newH(n,nbLay) + carb(n)
-        newS(n,nbLay,2) = newS(n,nbLay,2) + carb(n)
-      endif
-      if(carb2(n)>0.)then
-        newH(n,nbLay) = newH(n,nbLay) + carb2(n)
-        newS(n,nbLay,3) = newS(n,nbLay,3) + carb2(n)
-      endif
-      if(pel(n)>0.)then
-        newH(n,nbLay) = newH(n,nbLay) + pel(n)
-        newS(n,nbLay,4) = newS(n,nbLay,4) + pel(n)
       endif
     enddo
 

@@ -1,4 +1,4 @@
-pyBadlands - python version of Badlands
+pyBadlands - Basin & Landscape Dynamics
 =====
     
 <div align="center">
@@ -34,7 +34,10 @@ The model is based on the following characteristics:
 * 3D surface deformations using the node refinement technique proposed by [**Thieulot et al. ( 2014)**](http://onlinelibrary.wiley.com/doi/10.1002/2014GC005490/abstract;jsessionid=48A885F79A40B1E3E76AFC1BEAA2B238.f03t03).
 * Orographic precipitation using [**Smith & Barstad (2004)**](http://journals.ametsoc.org/doi/abs/10.1175/1520-0469(2004)061%3C1377%3AALTOOP%3E2.0.CO%3B2) linear model to compute topographic induced rain field.
 * Varying erodibility layers (both horizontally and vertically) to simulate impact of changing sediment characteristics on landscape evolution. 
-
+* Long-term evolution of longshore currents and induced sediment transport is simulated based on linear wave theory.
+* Fuzzy logic approach is used to estimate carbonate growth based on depth, wave energy and sedimentation rate.
+  
+  
 A set of functions for _pre_ & _post_-processing of **Badlands** inputs and outputs is available in a GitHub [**Companion**](https://github.com/badlands-model/pyBadlands-Companion) repository which is already shipped with the Badlands Docker container.
 
 ### Community driven
@@ -53,10 +56,13 @@ _Release v1.0.0 :_
 + **[Release 1: badlands-model/pyBadlands](http://doi.org/10.5281/zenodo.160412), Zenodo, doi:10.5281/zenodo.160412, 2016.**
 
 _Release v1.1.0 :_  
-+ **[Release 2: badlands-model/pyBadlands](http://doi.org/10.5281/zenodo.268053), Zenodo, doi:10.5281/zenodo.268053, 2017.**
++ **[Release 1.1: badlands-model/pyBadlands](http://doi.org/10.5281/zenodo.268053), Zenodo, doi:10.5281/zenodo.268053, 2017.**
 
-_v2.0.0 Release Candidate :_
-+ The ```master``` branch is a stable version of the code with the most recent developments embedded and is expected to be released as **version 2.0.0**
+_Release v2.0.0 :_
++ **[Release 2: badlands-model/pyBadlands](https://zenodo.org/badge/latestdoi/51286954), Zenodo, doi:10.5281/zenodo.1069573, 2018.** 
+
+_RC_
++ The ```master``` branch is a stable version of the code with the most recent developments embedded.
 
 ### Reporting  
 
