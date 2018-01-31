@@ -21,3 +21,4 @@ __MACOSX
 doc/_build/
 tags
 doc/env/
+Examples/crater/mcmcresults_*
