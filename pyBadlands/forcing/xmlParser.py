@@ -21,7 +21,7 @@ class xmlParser:
     This class defines XmL input file variables.
     """
 
-    def __init__(self, inputfile = None, makeUniqueOutputDir=True):
+    def __init__(self, run_nb, muted = False, inputfile = None, makeUniqueOutputDir=True):
         """
         If makeUniqueOutputDir is set, we create a uniquely-named directory for
         the output. If it's clear, we blindly accept what's in the XML file.
@@ -122,6 +122,7 @@ class xmlParser:
         self.makeUniqueOutputDir = makeUniqueOutputDir
 
         self.outDir = None
+        self.run_nb = run_nb
         self.sh5file = 'h5/sed'
         self.strath5file = 'h5/stratal.time'
 
@@ -133,6 +134,7 @@ class xmlParser:
         self.fxmffile = 'xmf/flow.time'
         self.fxdmffile = 'flow.series.xdmf'
 
+        self.muted = muted
         self.flexure = False
         self.ftime = None
         self.fnx = None
@@ -212,9 +214,9 @@ class xmlParser:
         self.pelGrowth = 0.
         self.pelDepth = None
 
-        self._get_XmL_Data()
+        self._get_XmL_Data(muted = self.muted)
 
-    def _get_XmL_Data(self):
+    def _get_XmL_Data(self, muted = False):
         """
         Main function used to parse the XmL input file.
         """
@@ -1257,14 +1259,15 @@ class xmlParser:
         out = None
         out = root.find('outfolder')
         if out is not None:
-            self.outDir = out.text
+            self.outDir = self.run_nb+'/'+out.text 
         else:
-            self.outDir = os.getcwd()+'/out'
+            self.outDir = os.getcwd()+ self.run_nb +'/' +'/out'
 
         if self.makeUniqueOutputDir:
             if os.path.exists(self.outDir):
                 self.outDir += '_'+str(len(glob.glob(self.outDir+str('*')))-1)
 
+        if not muted:
             os.makedirs(self.outDir)
             os.makedirs(self.outDir+'/h5')
             os.makedirs(self.outDir+'/xmf')

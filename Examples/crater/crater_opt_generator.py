@@ -10,23 +10,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 
 import time
-
-
-def plotElev(xyz=None):
-    fig = plt.figure()
-    rcParams['figure.figsize'] = (12,10)
-    ax=plt.gca()
-    im = ax.imshow(np.flipud(xyz),interpolation='nearest',cmap=cmo.cm.delta,
-                   vmin=-100, vmax=800)
-    plt.title('Elevation')
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="2%", pad=0.2)
-
-    plt.colorbar(im,cax=cax)
-    plt.show()
-    for z in xyz:
-        all_z = ' '.join(str(z))
-    print all_z
     
 def elevArray(coords=None):
 
@@ -47,32 +30,35 @@ def elevArray(coords=None):
     if len(onIDs) > 0:
         zi[onIDs] = z[indices[onIDs,0],0]
     zreg = np.reshape(zi,(ny,nx))
-        
+    
     return zreg
 
-
-def OptGenerator(inputname, rain, erodibility, etime):
+def OptGenerator(inputname, rain, erodibility, m, n, etime):
 
     model = badlandsModel()
     # Define the XmL input file
-    model.load_xml('1234',inputname, muted = True)
+    model.load_xml('Opt',inputname, verbose = False, muted = True)
 
     rreal = rain
     ereal = erodibility
 
     model.input.SPLero = ereal
     model.flow.erodibility.fill(ereal)
-    model.force.rainVal[:] = rreal   
-    model.run_to_time(etime)
+    model.force.rainVal[:] = rreal
+    #Adjust m and n values
+    model.input.SPLm = m
+    model.input.SPLn = n   
+    
+    model.run_to_time(etime, muted = True)
     
     XYZ = np.column_stack((model.FVmesh.node_coords[:, :2],model.elevation))
     regz = elevArray(XYZ)
     mat=np.matrix(regz)
-    np.savetxt('crater.txt',mat,fmt='%.5f')
+    np.savetxt('badlands.txt',mat,fmt='%.5f')
 
     return
 
 def main():
-    OptGenerator('crater.xml', 1, 9.e-5, 150000)
+    OptGenerator('crater.xml', 7, 5.e-4, 0.5, 1, 5000)
 
 if __name__ == "__main__": main()
