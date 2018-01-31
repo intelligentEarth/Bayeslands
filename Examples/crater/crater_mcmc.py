@@ -57,6 +57,68 @@ class Crater_MCMC():
 		self.step_n = 0.05
 		self.step_eta = 0.007
 
+	def blackbox(self, rain, erodibility, m , n):
+		"""
+		Main entry point for running badlands model with different forcing conditions.
+		The following forcing conditions can be used:
+			- different uniform rain (uniform meaning same precipitation value on the entire region)
+			- different uniform erodibility (uniform meaning same erodibility value on the entire region)
+
+		Parameters
+		----------
+		variable : inputname
+			XML file defining the parameters used to run Badlands simulation.
+
+		variable: rain
+			Requested uniform precipitation value.
+
+		variable: erodibility
+			Requested uniform erodibility value.
+
+		variable: etime
+			Duration of the experiment.
+
+		Return
+		------
+		The function returns 2D numpy arrays containing the following information:
+
+		variable: elev
+			Elevation as a 2D numpy array (regularly spaced dataset with resolution equivalent to simulation one)
+
+		variable: erodep
+			Cumulative erosion/deposition accumulation as a 2D numpy array (regularly spaced as well)
+
+		"""
+		tstart = time.clock()
+		# Re-initialise badlands model
+		model = badlandsModel()
+
+		# Load the XmL input file
+		model.load_xml(str(self.run_nb), self.input, muted = self.muted)
+
+		# Adjust erodibility based on given parameter
+		model.input.SPLero = erodibility
+		model.flow.erodibility.fill(erodibility)
+
+		# Adjust precipitation values based on given parameter
+		model.force.rainVal[:] = rain
+
+		#Adjust m and n values
+		model.input.SPLm = m
+		model.input.SPLn = n
+
+		# Run badlands simulation
+		model.run_to_time(self.simtime, muted = self.muted)
+
+		# Extract
+		elev,erodep = self.interpolateArray(model.FVmesh.node_coords[:, :2],model.elevation,model.cumdiff)
+
+		self.plotElev(elev = None, erodep = None, name = str(self.run_nb))
+
+		print 'Badlands black box model took (s):',time.clock()-tstart
+
+		return elev,erodep	## Considering elev as predicted variable to be compared	
+
 	def plotElev(self,size=(8,8),elev=None,erodep=None, name = None):
 		rcParams['figure.figsize']=size
 		if elev is not None:
@@ -119,68 +181,6 @@ class Crater_MCMC():
 		dzreg = np.reshape(dzi,(ny,nx))
 		return zreg,dzreg
 
-	def blackbox(self, rain, erodibility, m , n):
-		"""
-		Main entry point for running badlands model with different forcing conditions.
-		The following forcing conditions can be used:
-			- different uniform rain (uniform meaning same precipitation value on the entire region)
-			- different uniform erodibility (uniform meaning same erodibility value on the entire region)
-
-		Parameters
-		----------
-		variable : inputname
-			XML file defining the parameters used to run Badlands simulation.
-
-		variable: rain
-			Requested uniform precipitation value.
-
-		variable: erodibility
-			Requested uniform erodibility value.
-
-		variable: etime
-			Duration of the experiment.
-
-		Return
-		------
-		The function returns 2D numpy arrays containing the following information:
-
-		variable: elev
-			Elevation as a 2D numpy array (regularly spaced dataset with resolution equivalent to simulation one)
-
-		variable: erodep
-			Cumulative erosion/deposition accumulation as a 2D numpy array (regularly spaced as well)
-
-		"""
-		tstart = time.clock()
-		# Re-initialise badlands model
-		model = badlandsModel()
-
-		# Load the XmL input file
-		model.load_xml(str(self.run_nb), self.input, muted = self.muted)
-
-		# Adjust erodibility based on given parameter
-		model.input.SPLero = erodibility
-		model.flow.erodibility.fill(erodibility)
-
-		# Adjust precipitation values based on given parameter
-		model.force.rainVal[:] = rain
-
-		#Adjust m and n values
-		model.input.SPLm = m
-		model.input.SPLn = n
-
-		# Run badlands simulation
-		model.run_to_time(self.simtime, muted = self.muted)
-
-		# Extract
-		elev,erodep = self.interpolateArray(model.FVmesh.node_coords[:, :2],model.elevation,model.cumdiff)
-
-		self.plotElev(elev = None, erodep = None, name = str(self.run_nb))
-
-		print 'Badlands black box model took (s):',time.clock()-tstart
-
-		return elev,erodep	## Considering elev as predicted variable to be compared
-
 	def viewGrid(self, sample_num, rmse, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
 		"""
 		Use Plotly library to visualise the grid in 3D.
@@ -234,7 +234,7 @@ class Crater_MCMC():
 		)
 
 		fig = Figure(data=data, layout=layout)
-		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='/home/danial/BayesLands/Examples/crater/%s/plot_image_%s.html' %(self.filename, sample_num), validate=False)
+		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='/home/danial/BayesLands/Examples/crater/%s/plots/plot_image_%s.html' %(self.filename, sample_num), validate=False)
 		return
 
 	def save_accepted_params(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_rmse, pos_tau, pos_lik):
@@ -306,77 +306,6 @@ class Crater_MCMC():
 		else:
 			with file(('%s/accept_lik.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_lik)
-
-	def save_all_params(self, numsamp, rain, erod, m, n, rmse, tau, lik):
-		pos_rain = str(rain)
-		if not os.path.isfile(('%s/_rain.txt' % (self.filename))):
-			with file(('%s/_rain.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))    
-				outfile.write(pos_rain)
-		else:
-			with file(('%s/_rain.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_rain)
-
-		pos_erod = str(erod)
-		if not os.path.isfile(('%s/_erod.txt' % (self.filename))):
-			with file(('%s/_erod.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))    
-				outfile.write(pos_erod)
-		else:
-			with file(('%s/_erod.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_erod)
-
-		pos_m = str(m)
-		if not os.path.isfile(('%s/_m.txt' % (self.filename))):
-			with file(('%s/_m.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))    
-				outfile.write(pos_m)
-		else:
-			with file(('%s/_m.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_m)
-
-		pos_n = str(n)
-		if not os.path.isfile(('%s/_n.txt' % (self.filename))):
-			with file(('%s/_n.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))    
-				outfile.write(pos_n)
-		else:
-			with file(('%s/_n.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_n)
-
-		pos_rmse = str(rmse)
-		if not os.path.isfile(('%s/_rmse.txt' % (self.filename))):
-			with file(('%s/_rmse.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_rmse)
-		else:
-			with file(('%s/_rmse.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_rmse)
-
-		pos_tau = str(tau)
-		if not os.path.isfile(('%s/_tau.txt' % (self.filename))):
-			with file(('%s/_tau.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_tau)
-		else:
-			with file(('%s/_tau.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_tau)
-
-		pos_lik = str(lik)
-		if not os.path.isfile(('%s/_lik.txt' % (self.filename))):
-			with file(('%s/_lik.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
-				outfile.write(pos_lik)
-		else:
-			with file(('%s/_lik.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(numsamp))
 				outfile.write(pos_lik)
 
 	def rmse(self, predicted_elev, real_elev):
@@ -544,7 +473,6 @@ class Crater_MCMC():
 			print 'u', u, 'and mh_probability', mh_prob
 
 			# Save sample parameters 
-			self.save_all_params(i, p_rain, p_erod, p_m, p_n, rmse, tau_pro, likelihood_proposal)
 			self.viewGrid(i, rmse, p_rain, p_erod, width=1600, height=1600, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid '+ str(i))
 
 			if u < mh_prob: # Accept sample
@@ -565,23 +493,30 @@ class Crater_MCMC():
 				pos_tau[i + 1,] = tau_pro
 				pos_rmse[i + 1,] = rmse
 				pos_lik[i + 1,] = likelihood
+				
 				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_rmse[i+1,],pos_tau[i+1,], pos_lik[i+1,]) #Save accepted parameters in accept file
+				
 				#Save the elev array to file
 				prev_accepted_elev = predicted_elev
 				np.savetxt(elevation_file, prev_accepted_elev)
 
 			else: # Reject sample
-				pos_tau[i + 1,] = pos_tau[i,]
-				pos_rmse[i + 1,] = pos_rmse[i,]
-				pos_lik[i + 1,] = pos_lik[i,]
 				pos_erod[i+1] = pos_erod[i]
 				pos_rain[i+1] = pos_rain[i]
 				pos_m[i+1] = pos_m[i]
 				pos_n[i+1] = pos_n[i]
-				print 'REJECTED\nlikelihood:',likelihood,' and RMSE rejected:', pos_rmse[i,]
-				print 'Sample ', i, ' rejected and retained'
+				pos_tau[i + 1,] = pos_tau[i,]
+				pos_rmse[i + 1,] = pos_rmse[i,]
+				pos_lik[i + 1,] = pos_lik[i,]
+				
+				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_rmse[i+1,],pos_tau[i+1,], pos_lik[i+1,]) #Save last accepted parameters in accept file
+				
 				#Save the elev array to file
 				np.savetxt(elevation_file, prev_accepted_elev)
+
+				print 'REJECTED\nlikelihood:',likelihood,' and RMSE rejected:', pos_rmse[i,]
+				print 'Sample ', i, ' rejected and retained'
+				
 
 		burnin = 0.05 * samples  # use post burn in samples
 		pos_rmse = pos_rmse[int(burnin):,]
