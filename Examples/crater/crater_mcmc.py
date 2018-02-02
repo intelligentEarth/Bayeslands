@@ -52,7 +52,7 @@ class Crater_MCMC():
 		self.initial_n = []
 
 		self.step_rain = 0.1
-		self.step_erod = 1.e-6
+		self.step_erod = 1.e-5
 		self.step_m = 0.05
 		self.step_n = 0.05
 		self.step_eta = 0.007
@@ -182,7 +182,7 @@ class Crater_MCMC():
 		dzreg = np.reshape(dzi,(ny,nx))
 		return zreg,dzreg
 
-	def viewGrid(self, sample_num, rmse, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
+	def viewGrid(self, sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
 		"""
 		Use Plotly library to visualise the grid in 3D.
 
@@ -214,15 +214,15 @@ class Crater_MCMC():
 		"""
 
 		if zmin == None:
-			zmin = self.zi.min()
+			zmin = self.zData.min()
 
 		if zmax == None:
-			zmax = self.zi.max()
+			zmax = self.zData.max()
 
 		data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YIGnBu' ) ])
 
 		layout = Layout(
-			title='Crater Elevation- rmse = %s , rain = %s, erod = %s' %(rmse, rain, erod),
+			title='Crater Elevation  	rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
 			autosize=True,
 			width=width,
 			height=height,
@@ -235,7 +235,7 @@ class Crater_MCMC():
 		)
 
 		fig = Figure(data=data, layout=layout)
-		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='/home/danial/BayesLands/Examples/crater/%s/plots/plot_image_%s.html' %(self.filename, sample_num), validate=False)
+		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/plots/plot_image_%s.html' %(self.filename, sample_num), validate=False)
 		return
 
 	def save_accepted_params(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_rmse, pos_tau, pos_likl):
@@ -290,12 +290,12 @@ class Crater_MCMC():
 				outfile.write(pos_rmse)
 
 		pos_tau = str(pos_tau)
-		if not os.path.isfile(('%s/accept_tau.txt' % (self.filename))):
-			with file(('%s/accept_tau.txt' % (self.filename)),'w') as outfile:
+		if not os.path.isfile(('%s/accept_taus.txt' % (self.filename))):
+			with file(('%s/accept_taus.txt' % (self.filename)),'w') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_tau)
 		else:
-			with file(('%s/accept_tau.txt' % (self.filename)),'a') as outfile:
+			with file(('%s/accept_taus.txt' % (self.filename)),'a') as outfile:
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_tau)
 
@@ -351,9 +351,9 @@ class Crater_MCMC():
 		# print 'n initial value', n
 
 		# Generating close to real values
-		rain = np.random.uniform(6.9,7.1)
+		rain = np.random.uniform(6.99,7.01)
 		print 'rain initial value', rain		
-		erod = np.random.uniform(4.e-4,6.e-4)
+		erod = np.random.uniform(49.e-5,51.e-5)
 		print 'erod initial value', erod		
 		# m = np.random.uniform(0.49,0.51)
 		m = 0.5
@@ -374,6 +374,10 @@ class Crater_MCMC():
 			outfile.write('\n\tInitial_proposed_erod: {0}'.format(erod))
 			outfile.write('\n\tInitial_proposed_m: {0}'.format(m))
 			outfile.write('\n\tInitial_proposed_n: {0}'.format(n))
+			outfile.write('\n\terod_limits: {0}'.format(erodlimits))
+			outfile.write('\n\train_limits: {0}'.format(rainlimits))
+			outfile.write('\n\tm_limit: {0}'.format(mlimit))
+			outfile.write('\n\tn_limit: {0}'.format(nlimit))
 			#outfile.write('\n\tInitial_tausq_n: {0}'.format(np.exp(np.log(np.var(initial_predicted_elev - real_elev)))))
 
 		# Creating storage for parameters to be passed to Blackbox model 
@@ -406,7 +410,7 @@ class Crater_MCMC():
 		# Saving parameters for Initial run
 		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_rmse[0], pos_tau[0], pos_likl[0])
 
-		self.viewGrid(0, rmse, rain, erod, width=1000, height=1000, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid')
+		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid')
 
 		start = time.time()
 
@@ -482,7 +486,7 @@ class Crater_MCMC():
 			print 'u', u, 'and mh_probability', mh_prob
 
 			# Save sample parameters 
-			self.viewGrid(i, rmse, p_rain, p_erod, width=1000, height=1000, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid '+ str(i))
+			self.viewGrid(i, likelihood_proposal, p_rain, p_erod, width=1000, height=1000, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid '+ str(i))
 
 			if u < mh_prob: # Accept sample
 				print i, ' is accepted sample'
@@ -532,7 +536,7 @@ class Crater_MCMC():
 		print 'divisor', samples - burnsamples -2
 		mean_pred_elevation = np.divide(sum_elevation, samples-burnsamples-2)
 		np.savetxt(self.filename+'/mean_pred_elevation.txt', mean_pred_elevation)
-		self.viewGrid('mean_pred_elevation', '-', '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
+		self.viewGrid('mean_pred_elevation', 'Mean Elevation', '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
 
 
 		burnin = 0.05 * samples  # use post burn in samples
@@ -561,10 +565,10 @@ def main():
 	muted = True
 	xmlinput = 'crater.xml'
 	simtime = 5000
-	samples = 4500
+	samples = 10000
 	run_nb = 0
 	rainlimits = [6,8]
-	erodlimts = [3.e-4,8.e-4]
+	erodlimits = [3.e-4,8.e-4]
 	mlimit = [0 , 2]
 	nlimit = [0 , 4]
 
@@ -580,7 +584,7 @@ def main():
 	print 'Input file shape', input_file.shape
 	run_nb_str = 'mcmcresults_' + str(run_nb)
 
-	crater_mcmc = Crater_MCMC(muted, simtime, samples, input_file, filename, xmlinput, erodlimts, rainlimits, mlimit, nlimit, run_nb_str)
+	crater_mcmc = Crater_MCMC(muted, simtime, samples, input_file, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str)
 	[pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, pos_likl, accept_ratio, accepted_count] = crater_mcmc.sampler()
 
 	print 'successfully sampled'
