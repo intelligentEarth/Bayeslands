@@ -1,3 +1,16 @@
+
+##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+##                                                                                   ##
+##  This file forms part of the BayesLands surface processes modelling companion.      ##
+##                                                                                   ##
+##  For full license and copyright information, please refer to the LICENSE.md file  ##
+##  located at the project root, or contact the authors.                             ##
+##                                                                                   ##
+##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+"""
+This script is intended to 
+"""
+
 from pyBadlands.model import Model as badlandsModel
 import numpy as np
 import cmocean as cmo
@@ -35,22 +48,17 @@ def inputGenerator(fname, x, y, size, res_fact= None, max_coord= None):
 		print 'p ', p
 		newarr.append(p[x:size+1])
 
-	# for num, p in enumerate(split_arr):
-	# 	newarr.append(p[x:size+1])
-	# 	if num == y:
-	# 		break
-
 	X = list(itertools.chain.from_iterable(newarr))
 
 	Z = np.vstack(X) 
 
 	print Z
 
-	np.savetxt('data/newnodes.csv', Z, fmt='%.5f')
+	np.savetxt('data/res_crater.csv', Z, fmt='%.5f')
 
 def main():
 
-	inputGenerator('data/nodes.csv', 150, 150, 50, 10, 2400)
+	inputGenerator('data/res_crater.csv', 150, 150, 50, 10, 2400)
 	
 	print 'Finished'
 

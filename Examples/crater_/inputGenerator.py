@@ -1,3 +1,16 @@
+
+##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+##                                                                                   ##
+##  This file forms part of the BayesLands surface processes modelling companion.      ##
+##                                                                                   ##
+##  For full license and copyright information, please refer to the LICENSE.md file  ##
+##  located at the project root, or contact the authors.                             ##
+##                                                                                   ##
+##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+"""
+This script is intended to 
+"""
+
 from pyBadlands.model import Model as badlandsModel
 import numpy as np
 import cmocean as cmo

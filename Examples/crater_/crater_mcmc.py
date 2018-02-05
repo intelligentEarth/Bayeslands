@@ -1,3 +1,16 @@
+##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+##                                                                                   ##
+##  This file forms part of the BayesLands surface processes modelling companion.      ##
+##                                                                                   ##
+##  For full license and copyright information, please refer to the LICENSE.md file  ##
+##  located at the project root, or contact the authors.                             ##
+##                                                                                   ##
+##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+"""
+This script is intended to implement an MCMC (Markov Chain Monte Carlo) Metropolis Hastings methodology to pyBadlands. 
+Badlands is used as a "black box" model for bayesian methods.
+"""
+
 import numpy as np
 import random
 import time
@@ -374,11 +387,12 @@ class Crater_MCMC():
 			outfile.write('\n\tInitial_proposed_erod: {0}'.format(erod))
 			outfile.write('\n\tInitial_proposed_m: {0}'.format(m))
 			outfile.write('\n\tInitial_proposed_n: {0}'.format(n))
-			outfile.write('\n\terod_limits: {0}'.format(erodlimits))
-			outfile.write('\n\train_limits: {0}'.format(rainlimits))
-			outfile.write('\n\tm_limit: {0}'.format(mlimit))
-			outfile.write('\n\tn_limit: {0}'.format(nlimit))
-			
+			outfile.write('\n\terod_limits: {0}'.format(self.erodlimits))
+			outfile.write('\n\train_limits: {0}'.format(self.rainlimits))
+			outfile.write('\n\tm_limit: {0}'.format(self.mlimit))
+			outfile.write('\n\tn_limit: {0}'.format(self.nlimit))
+			#outfile.write('\n\tInitial_tausq_n: {0}'.format(np.exp(np.log(np.var(initial_predicted_elev - real_elev)))))
+
 		# Creating storage for parameters to be passed to Blackbox model 
 		v_proposal = []
 		v_proposal.append(rain)
@@ -578,12 +592,12 @@ def main():
 		os.makedirs('mcmcresults_%s/plots' % (run_nb))
 		filename = ('mcmcresults_%s' % (run_nb))
 
-	input_file = np.loadtxt('data/badlands.txt')
+	final_elev = np.loadtxt('data/final.txt')
 
-	print 'Input file shape', input_file.shape
+	print 'Input file shape', final_elev.shape
 	run_nb_str = 'mcmcresults_' + str(run_nb)
 
-	crater_mcmc = Crater_MCMC(muted, simtime, samples, input_file, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str)
+	crater_mcmc = Crater_MCMC(muted, simtime, samples, final_elev, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str)
 	[pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, pos_likl, accept_ratio, accepted_count] = crater_mcmc.sampler()
 
 	print 'successfully sampled'

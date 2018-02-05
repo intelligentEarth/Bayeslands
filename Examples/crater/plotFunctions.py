@@ -1,3 +1,15 @@
+##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+##                                                                                   ##
+##  This file forms part of the BayesLands surface processes modelling companion.      ##
+##                                                                                   ##
+##  For full license and copyright information, please refer to the LICENSE.md file  ##
+##  located at the project root, or contact the authors.                             ##
+##                                                                                   ##
+##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+"""
+This script is intended to 
+"""
+
 import numpy as np
 import random
 import time
@@ -24,7 +36,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 
 def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
-		nb_bins=25
+		nb_bins=30
 		slen = np.arange(0,len(pos_likl),1)
 		#print 'slen', slen
 		font = 9
@@ -37,8 +49,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 		rainspace = np.linspace(rainmin,rainmax,len(pos_rain))
 		rainm,rains = stats.norm.fit(pos_rain)
 		pdf_rain = stats.norm.pdf(rainspace,rainm,rains)
-		#rain_real_value = 0.5
-
+		
 		fig = plt.figure(figsize=(10,12))
 		ax = fig.add_subplot(111)
 		ax.spines['top'].set_color('none')
@@ -53,6 +64,8 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 
 		n, rainbins, patches = ax1.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
 		
+		rain_real_value = 7.0
+		ax1.axvline(rain_real_value)
 		# rainy = mlab.normpdf(rainbins, rainm, rains)
 		# l = ax1.plot(rainbins, rainy, 'r--', linewidth= width)
 
@@ -98,6 +111,9 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 		
 		n, erodbins, patches = ax1.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
 		
+
+		erod_real_value = 5.e-4
+		ax1.axvline(erod_real_value)
 		# erody = mlab.normpdf(erodbins, erodm, erods)
 		# l = ax1.plot(erodbins, erody, 'r--', linewidth= width)
 
