@@ -189,7 +189,7 @@ def main():
     choice = input('Would you like to: \n 1) Generate a simulated final topography \n 2) Visualise the initial topography \n ')
 
     if choice == 1:
-        topoGenerator('crater.xml', 'final', 2, 5.e-4, 0.5, 1, 5000)
+        topoGenerator('crater.xml', 'final', 2, 5.e-4, 0.5, 1, 10000)
     else:  
         inputVisualisation('crater.xml','initial', 2, 5.e-4, 0.5, 1, 0)
 

@@ -64,8 +64,8 @@ class Crater_MCMC():
 		self.initial_m = []
 		self.initial_n = []
 
-		self.step_rain = 0.1
-		self.step_erod = 1.e-5
+		self.step_rain = 0.01
+		self.step_erod = 9.e-6
 		self.step_m = 0.05
 		self.step_n = 0.05
 		self.step_eta = 0.007
@@ -119,19 +119,29 @@ class Crater_MCMC():
 		#Adjust m and n values
 		model.input.SPLm = m
 		model.input.SPLn = n
+		telev = []
 
 		# Run badlands simulation for input simulation time
 		model.run_to_time(self.simtime, muted = self.muted)
-
 		# Extract elevation and erosion-deposition grid
 		elev,erodep = self.interpolateArray(model.FVmesh.node_coords[:, :2],model.elevation,model.cumdiff)
-
+		telev.append(elev)
 		# HeatMap visualisation for elevation and erosion-deposition
 		self.plotElev(elev = None, erodep = None, name = str(self.run_nb))
 
+		# simulation_times = np.arange(0, self.simtime+1, 1000)
+		# elevation_vec = np.zeros(simulation_times.size)
+
+		# for x in simulation_times:
+		# 	self.simtime = simulation_times[x]
+		# 	model.run_to_time(self.simtime, muted = self.muted)
+		# 	elev, erodep = self.interpolateArray(model.FVmesh.node_coords[:, :2], model.elevation, model.cumdiff)
+		# 	self.plotElev(elev = None, erodep = None, name = str(self.run_nb))
+		# 	elevation_vec[x] = elev
+
 		print 'Badlands black box model took (s):',time.clock()-tstart
 
-		return elev,erodep	## Considering elev as predicted variable to be compared	
+		return elev, erodep, elevation_vec	## Considering elev as predicted variable to be compared	
 
 	def plotElev(self,size=(8,8),elev=None,erodep=None, name = None):
 		rcParams['figure.figsize']=size
@@ -364,9 +374,9 @@ class Crater_MCMC():
 		# print 'n initial value', n
 
 		# Generating close to real values
-		rain = np.random.uniform(1.99,2.01)
+		rain = np.random.uniform(2.1,2.4)
 		print 'rain initial value', rain		
-		erod = np.random.uniform(4.e-4,5.e-4)
+		erod = np.random.uniform(5.e-4,6.e-4)
 		print 'erod initial value', erod		
 		# m = np.random.uniform(0.49,0.51)
 		m = 0.5
@@ -479,12 +489,12 @@ class Crater_MCMC():
 
 			# Updating eta and and recalculating tau for proposal (pro)
 			eta_pro = eta + np.random.normal(0, self.step_eta, 1)
-			print 'eta_pro', eta_pro
+			#print 'eta_pro', eta_pro
 			tau_pro = math.exp(eta_pro)
-			print 'tau_pro ', tau_pro
+			#print 'tau_pro ', tau_pro
 
 			# Passing paramters to calculate likelihood and rmse with new tau
-			[likelihood_proposal, predicted_elev, rmse] = self.likelihood_func(v_proposal, predicted_elev, tau_pro)
+			[likelihood_proposal, predicted_elev, rmse] = self.likelihood_func(v_proposal, real_elev, tau_pro)
 
 			# Difference in likelihood from previous accepted proposal
 			diff_likelihood = likelihood_proposal - likelihood
@@ -496,7 +506,7 @@ class Crater_MCMC():
 				mh_prob = 1
 
 			u = random.uniform(0,1)
-			print 'u', u, 'and mh_probability', mh_prob
+			#print 'u', u, 'and mh_probability', mh_prob
 
 			# Save sample parameters 
 			# self.viewGrid(i, likelihood_proposal, p_rain, p_erod, width=1000, height=1000, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid '+ str(i))
@@ -548,7 +558,7 @@ class Crater_MCMC():
 
 		print 'divisor', samples - burnsamples -2
 		mean_pred_elevation = np.divide(sum_elevation, samples-burnsamples-2)
-		np.savetxt(self.filename+'/mean_pred_elevation.txt', mean_pred_elevation)
+		np.savetxt(self.filename+'/mean_pred_elevation.txt', mean_pred_elevation, fmt='%.5f')
 		self.viewGrid('mean_pred_elevation', 'Mean Elevation', '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
 
 
@@ -577,11 +587,11 @@ def main():
 	random.seed(time.time())
 	muted = True
 	xmlinput = 'crater.xml'
-	simtime = 5000
-	samples = 500000
+	simtime = 10000
+	samples = 150000
 	run_nb = 0
 	rainlimits = [1,3]
-	erodlimits = [1.e-4,9.e-4]
+	erodlimits = [2.e-4,9.e-4]
 	mlimit = [0 , 2]
 	nlimit = [0 , 4]
 
