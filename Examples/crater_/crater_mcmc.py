@@ -138,7 +138,7 @@ class Crater_MCMC():
 			
 			#print 'elev shape  ', elev.shape
 			#print 'erodep shape  ', erodep.shape
-			print 'SIMTIME IS   ' , self.simtime
+			#print 'SIMTIME IS   ' , self.simtime
 
 			elev_vec[self.simtime] = elev
 			erodep_vec[self.simtime] = erodep
@@ -440,7 +440,7 @@ class Crater_MCMC():
 
 		burnsamples = int(samples*0.05)
 
-		print 'MY PRED KEYS SHOULD BE = SIMTIMES ,  ', pred_elev.keys()
+		#print 'MY PRED KEYS SHOULD BE = SIMTIMES ,  ', pred_elev.keys()
 		#print 'sum elevation shape ', sum_elevation.shape
 
 		for i in range(samples-1):
