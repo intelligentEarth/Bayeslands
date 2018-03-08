@@ -15,10 +15,13 @@ import numpy as np
 import random
 import time
 import math
+import copy
+from copy import deepcopy
 import cmocean as cmo
 from pylab import rcParams
 import fnmatch
 import shutil
+import collections
 from PIL import Image
 from io import StringIO
 from cycler import cycler
@@ -70,6 +73,8 @@ class Crater_MCMC():
 		self.step_n = 0.05
 		self.step_eta = 0.007
 
+		self.sim_interval = np.arange(0, self.simtime+1, 1000)
+
 	def blackbox(self, rain, erodibility, m , n):
 		"""
 		Main entry point for running badlands model with different forcing conditions.
@@ -120,18 +125,27 @@ class Crater_MCMC():
 		model.input.SPLm = m
 		model.input.SPLn = n
 
-		# Run badlands simulation for input simulation time
-		model.run_to_time(self.simtime, muted = self.muted)
+		elev_vec = collections.OrderedDict()
+		erodep_vec = collections.OrderedDict()
+		
+		for x in range(len(self.sim_interval)):
+			
+			self.simtime = self.sim_interval[x]
+			
+			model.run_to_time(self.simtime, muted = self.muted)
+			
+			elev, erodep = self.interpolateArray(model.FVmesh.node_coords[:, :2], model.elevation, model.cumdiff)
+			
+			#print 'elev shape  ', elev.shape
+			#print 'erodep shape  ', erodep.shape
+			print 'SIMTIME IS   ' , self.simtime
 
-		# Extract elevation and erosion-deposition grid
-		elev,erodep = self.interpolateArray(model.FVmesh.node_coords[:, :2],model.elevation,model.cumdiff)
+			elev_vec[self.simtime] = elev
+			erodep_vec[self.simtime] = erodep
+			
+			print 'Badlands black box model took (s):',time.clock()-tstart
 
-		# HeatMap visualisation for elevation and erosion-deposition
-		self.plotElev(elev = None, erodep = None, name = str(self.run_nb))
-
-		print 'Badlands black box model took (s):',time.clock()-tstart
-
-		return elev,erodep	## Considering elev as predicted variable to be compared	
+		return elev_vec, erodep_vec	## Considering elev as pred variable to be compared	
 
 	def plotElev(self,size=(8,8),elev=None,erodep=None, name = None):
 		rcParams['figure.figsize']=size
@@ -322,18 +336,18 @@ class Crater_MCMC():
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_likl)
 
-	def rmse(self, predicted_elev, real_elev):
-		rmse =np.sqrt(((predicted_elev - real_elev) ** 2).mean())
+	def rmse(self, pred_elev, real_elev):
+		rmse =np.sqrt(((pred_elev - real_elev) ** 2).mean())
 		return rmse
 
 	def likelihood_func(self,input_vector, real_elev, tausq):
-		predicted_elev, predicted_erodep = self.blackbox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
+		pred_elev_vec, pred_erodep_vec = self.blackbox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
 
-		rmse = 0 #self.rmse(predicted_elev, real_elev)
+		rmse = 0 #self.rmse(pred_elev, real_elev)
 		
-		likelihood = - 0.5 * np.log(2* math.pi * tausq) - 0.5 * np.square(predicted_elev - real_elev) / tausq
+		likelihood = - 0.5 * np.log(2* math.pi * tausq) - 0.5 * np.square(pred_elev_vec[self.simtime] - real_elev) / tausq
 
-		return [np.sum(likelihood), predicted_elev, rmse]
+		return [np.sum(likelihood), pred_elev_vec, rmse]
 
 	def sampler(self):
 		
@@ -348,23 +362,15 @@ class Crater_MCMC():
 		pos_rain = np.zeros(samples)
 		pos_m = np.zeros(samples)
 		pos_n = np.zeros(samples)
-		prev_accepted_elev = []
 		
 		# List of accepted samples
 		count_list = []
 
-		#Generating initial Prediction parameters from a known range
-		# rain = np.random.uniform(0.5,4.0)
-		# print 'rain initial value', rain
-		# erod = np.random.uniform(1.e-6,1.e-4)
-		# print 'erod initial value', erod
-		# m = np.random.uniform(0,2)
-		# print 'm initial value', m
-		# n = np.random.uniform(0,4)
-		# print 'n initial value', n
+		#
+		num_div = 0
 
 		# Generating close to real values
-		rain = np.random.uniform(6.99,7.01)
+		rain = np.random.uniform(6.01,6.21)
 		print 'rain initial value', rain		
 		erod = np.random.uniform(49.e-5,51.e-5)
 		print 'erod initial value', erod		
@@ -391,7 +397,7 @@ class Crater_MCMC():
 			outfile.write('\n\train_limits: {0}'.format(self.rainlimits))
 			outfile.write('\n\tm_limit: {0}'.format(self.mlimit))
 			outfile.write('\n\tn_limit: {0}'.format(self.nlimit))
-			#outfile.write('\n\tInitial_tausq_n: {0}'.format(np.exp(np.log(np.var(initial_predicted_elev - real_elev)))))
+			#outfile.write('\n\tInitial_tausq_n: {0}'.format(np.exp(np.log(np.var(init_pred_elev - real_elev)))))
 
 		# Creating storage for parameters to be passed to Blackbox model 
 		v_proposal = []
@@ -401,34 +407,41 @@ class Crater_MCMC():
 		v_proposal.append(n)
 
 		# Output predictions from Blackbox model
-		initial_predicted_elev, initial_predicted_erodep = self.blackbox(v_proposal[0], v_proposal[1], v_proposal[2], v_proposal[3])
+		init_pred_elev_vec, init_pred_erodep_vec = self.blackbox(v_proposal[0], v_proposal[1], v_proposal[2], v_proposal[3])
 
 		# Calculating eta and tau / Geofffrey's Prior for Tausq
-		eta = np.log(np.var(initial_predicted_elev - real_elev))
+		eta = np.log(np.var(init_pred_elev_vec[self.simtime] - real_elev))
 		print 'eta = ', eta
 		tau_pro = np.exp(eta)
 		prior_likelihood = 1
 
 		#  Passing initial variables along with tau to calculate likelihood and rmse
-		[likelihood, predicted_elev, rmse] = self.likelihood_func(v_proposal, real_elev, tau_pro)
+		[likelihood, pred_elev, rmse] = self.likelihood_func(v_proposal, real_elev, tau_pro)
 		print '\tinitial likelihood:', likelihood, 'and initial rmse:', rmse
 
 		# Storing RMSE, tau values and adding initial run to accepted list
 		pos_rmse = np.full(samples, rmse)
 		pos_tau = np.full(samples, tau_pro)
 		pos_likl = np.zeros(samples, likelihood)
-		prev_accepted_elev = predicted_elev
 		count_list.append(0)
 
+		prev_acpt_elev = deepcopy(pred_elev)
+		
 		# Saving parameters for Initial run
 		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_rmse[0], pos_tau[0], pos_likl[0])
 
-		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid')
+		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zmin=-10, zmax=600, zData=pred_elev[self.simtime], title='Export Slope Grid')
 
 		start = time.time()
 
-		sum_elevation = np.zeros((initial_predicted_elev.shape[0], initial_predicted_elev.shape[1]))
+		sum_elevation = np.zeros((init_pred_elev_vec[self.simtime].shape[0], init_pred_elev_vec[self.simtime].shape[1]))
+		
+		sum_elev = deepcopy(pred_elev)
+
 		burnsamples = int(samples*0.05)
+
+		print 'MY PRED KEYS SHOULD BE = SIMTIMES ,  ', pred_elev.keys()
+		#print 'sum elevation shape ', sum_elevation.shape
 
 		for i in range(samples-1):
 
@@ -479,12 +492,12 @@ class Crater_MCMC():
 
 			# Updating eta and and recalculating tau for proposal (pro)
 			eta_pro = eta + np.random.normal(0, self.step_eta, 1)
-			print 'eta_pro', eta_pro
+			#print 'eta_pro', eta_pro
 			tau_pro = math.exp(eta_pro)
-			print 'tau_pro ', tau_pro
+			#print 'tau_pro ', tau_pro
 
 			# Passing paramters to calculate likelihood and rmse with new tau
-			[likelihood_proposal, predicted_elev, rmse] = self.likelihood_func(v_proposal, real_elev, tau_pro)
+			[likelihood_proposal, pred_elev, rmse] = self.likelihood_func(v_proposal, real_elev, tau_pro)
 
 			# Difference in likelihood from previous accepted proposal
 			diff_likelihood = likelihood_proposal - likelihood
@@ -496,10 +509,10 @@ class Crater_MCMC():
 				mh_prob = 1
 
 			u = random.uniform(0,1)
-			print 'u', u, 'and mh_probability', mh_prob
+			#print 'u', u, 'and mh_probability', mh_prob
 
 			# Save sample parameters 
-			# self.viewGrid(i, likelihood_proposal, p_rain, p_erod, width=1000, height=1000, zmin=-10, zmax=600, zData=predicted_elev, title='Export Slope Grid '+ str(i))
+			# self.viewGrid(i, likelihood_proposal, p_rain, p_erod, width=1000, height=1000, zmin=-10, zmax=600, zData=pred_elev, title='Export Slope Grid '+ str(i))
 
 			if u < mh_prob: # Accept sample
 				print i, ' is accepted sample'
@@ -523,10 +536,18 @@ class Crater_MCMC():
 				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_rmse[i+1,],pos_tau[i+1,], pos_likl[i+1,]) #Save accepted parameters in accept file
 				
 				#Save the previous accepted to current in case next is rejected
-				prev_accepted_elev = predicted_elev
+				prev_acpt_elev.update(pred_elev)
 				
 				if i>burnsamples:
-					sum_elevation = sum_elevation + predicted_elev
+					for k, v in pred_elev.items():
+						sum_elev[k] += v
+
+					# sum_elevation = sum_elevation + pred_elev[self.simtime]
+
+					# if sum_elev[self.simtime].all() == sum_elevation.all():
+					# 	print 'TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE'
+
+					num_div += 1
 
 			else: # Reject sample
 				pos_erod[i+1] = pos_erod[i]
@@ -540,16 +561,30 @@ class Crater_MCMC():
 				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_rmse[i+1,],pos_tau[i+1,], pos_likl[i+1,]) #Save last accepted parameters in accept file
 				
 				if i>burnsamples:
-					sum_elevation = sum_elevation + prev_accepted_elev
+					for k, v in prev_acpt_elev.items():
+						sum_elev[k] += v
 
-				print 'REJECTED\nlikelihood:',likelihood,' and RMSE rejected:', pos_rmse[i,]
+					# sum_elevation = sum_elevation + prev_acpt_elev[self.simtime]
+
+					# if sum_elev[self.simtime].all() == sum_elevation.all():
+					# 	print 'THIS IS ALSO TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE'
+
+					num_div += 1
+
+				print '\n REJECTED\nlikelihood: ',likelihood
 				print 'Sample ', i, ' rejected and retained'
-				
+		
+		print 'num_div', num_div
+		for k, v in sum_elev.items():
+			sum_elev[k] = np.divide(sum_elev[k], num_div)
+			mean_pred_elevation = sum_elev[k]
+			np.savetxt(self.filename+'/mean_pred_elev_%s.txt' %(k), mean_pred_elevation, fmt='%.5f')
+			self.viewGrid('mean_pred_elevation%s' %(k), 'Mean Elevation_%s' %(k), '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
 
-		print 'divisor', samples - burnsamples -2
-		mean_pred_elevation = np.divide(sum_elevation, samples-burnsamples-2)
-		np.savetxt(self.filename+'/mean_pred_elevation.txt', mean_pred_elevation)
-		self.viewGrid('mean_pred_elevation', 'Mean Elevation', '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
+		# print 'divisor', samples - burnsamples -2
+		# mean_pred_elevation = np.divide(sum_elevation, samples-burnsamples-2)
+		# np.savetxt(self.filename+'/mean_pred_elevation.txt', mean_pred_elevation, fmt='%.5f')
+		# self.viewGrid('mean_pred_elevation', 'Mean Elevation', '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
 
 
 		burnin = 0.05 * samples  # use post burn in samples
