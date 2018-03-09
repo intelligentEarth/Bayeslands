@@ -1,4 +1,4 @@
-pyBadlands - Basin & Landscape Dynamics
+BayesLands - An MCMC implementation of pyBadlands
 =====
     
 <div align="center">
@@ -13,32 +13,6 @@ pyBadlands - Basin & Landscape Dynamics
 
 [Badlands overview](https://prezi.com/5y1usorz8e8k/badlands-overview/?utm_campaign=share&utm_medium=copy) - Basin Genesis Hub presentation (2017)
 
-## Getting started
-
-For installation information and documentation visit our github [**wiki page**](https://github.com/badlands-model/pyBadlands/wiki) which provides several useful notes on how to start using the tool.
-
-The easiest way to get started is with the [Docker container](https://hub.docker.com/u/badlandsmodel/) using [Kitematic](https://docs.docker.com/kitematic/userguide/). Once **Kitematic** is installed on your computer, open it and look for **pybadlands-demo** via the *search* menu.
-
-If you want to install it yourself, these 2 Dockerfiles ([**dependencies**](https://github.com/badlands-model/pyBadlands-Dependencies-Docker/blob/master/Dockerfile) & [**code**](https://github.com/badlands-model/pyBadlands-Docker-Demo/blob/master/Dockerfile)) are the best documentation of the required packages.
-
-The latest pyBadlands version is the one that’s in our Github [repository](https://github.com/badlands-model/pyBadlands). Get it using this shell command, which requires Git: 
-* `git clone https://github.com/badlands-model/pyBadlands.git`
-
-**API documentation** is available from [http://pybadlands.readthedocs.io](http://pybadlands.readthedocs.io/en/master/)
-
-## The specs...
-
-The model is based on the following characteristics:
-* The finite volume approach from [**Tucker et al. (2001)**](http://www.sciencedirect.com/science/article/pii/S0098300400001345) based on the dual Delaunay-Voronoi framework is used to solve the continuity equation explicitly,
-* Node ordering is perform efficiently based on the work from [**Braun & Willett (2013)**](http://www.sciencedirect.com/science/article/pii/S0169555X12004618),
-* 3D surface deformations using the node refinement technique proposed by [**Thieulot et al. ( 2014)**](http://onlinelibrary.wiley.com/doi/10.1002/2014GC005490/abstract;jsessionid=48A885F79A40B1E3E76AFC1BEAA2B238.f03t03).
-* Orographic precipitation using [**Smith & Barstad (2004)**](http://journals.ametsoc.org/doi/abs/10.1175/1520-0469(2004)061%3C1377%3AALTOOP%3E2.0.CO%3B2) linear model to compute topographic induced rain field.
-* Varying erodibility layers (both horizontally and vertically) to simulate impact of changing sediment characteristics on landscape evolution. 
-* Long-term evolution of longshore currents and induced sediment transport is simulated based on linear wave theory.
-* Fuzzy logic approach is used to estimate carbonate growth based on depth, wave energy and sedimentation rate.
-  
-  
-A set of functions for _pre_ & _post_-processing of **Badlands** inputs and outputs is available in a GitHub [**Companion**](https://github.com/badlands-model/pyBadlands-Companion) repository which is already shipped with the Badlands Docker container.
 
 ### Community driven
 
@@ -48,40 +22,6 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU Lesser General Public License along with this program.  If not, see <http://www.gnu.org/licenses/lgpl-3.0.en.html>.
 
-### Versioning  
-
-Current releases (**DOI** citable): 
-
-_Release v1.0.0 :_  
-+ **[Release 1: badlands-model/pyBadlands](http://doi.org/10.5281/zenodo.160412), Zenodo, doi:10.5281/zenodo.160412, 2016.**
-
-_Release v1.1.0 :_  
-+ **[Release 1.1: badlands-model/pyBadlands](http://doi.org/10.5281/zenodo.268053), Zenodo, doi:10.5281/zenodo.268053, 2017.**
-
-_Release v2.0.0 :_
-+ **[Release 2: badlands-model/pyBadlands](https://zenodo.org/badge/latestdoi/51286954), Zenodo, doi:10.5281/zenodo.1069573, 2018.** 
-
-_RC_
-+ The ```master``` branch is a stable version of the code with the most recent developments embedded.
-
-### Reporting  
-
-If you come accross a bug or if you need some help compiling or using the code you can: 
-
-- go through our mailing list [Archive](http://mailman.sydney.edu.au/pipermail/badlands/)
-- subscribe to our [mailing list](http://mailman.sydney.edu.au/mailman/listinfo/badlands)
-- or [drop us a line](mailto:badlands@mailman.sydney.edu.au)
-
-## Hands-on examples
-
-A compilation of notebooks with examples are proposed to give you a quick feeling of what could be done with the code. Testing models:
-
-+ delta evolution under sea-level fluctuation [nbviewer](http://nbviewer.jupyter.org/github/badlands-model/pyBadlands/blob/master/Examples/delta/delta.ipynb)
-+ impact of climate on mountain dynamic [nbviewer](http://nbviewer.jupyter.org/github/badlands-model/pyBadlands/blob/master/Examples/mountain/mountain.ipynb)
-+ basin filling associated to a strike-slip fault system [nbviewer](http://nbviewer.jupyter.org/github/badlands-model/pyBadlands/blob/master/Examples/strikeslip/strike-slip.ipynb)
-+ infilling of a crater-type topography [nbviewer](http://nbviewer.jupyter.org/github/badlands-model/pyBadlands/blob/master/Examples/crater/crater.ipynb)
-+ flexural response due to loading and unloading under variable elastic thickness [nbviewer](http://nbviewer.jupyter.org/github/badlands-model/pyBadlands/blob/master/Examples/flexure/flexure.ipynb)
-+ quick setup of real topography/bathymetry model using etopo1 [nbviewer](http://nbviewer.jupyter.org/github/badlands-model/pyBadlands/blob/master/Examples/etopo/etopo.ipynb)
 
 ### Documentation related to the physics & assumptions
 
@@ -93,4 +33,4 @@ A compilation of notebooks with examples are proposed to give you a quick feelin
 + **Salles, T., N. Flament, and D. Muller: [Influence of mantle flow on the drainage of eastern Australia since the Jurassic Period](http://dx.doi.org/10.1002/2016GC006617), Geochem. Geophys. Geosyst., 18, doi:10.1002/2016GC006617, 2017** -- [Supplementary materials: Australian Landscape Dynamic](https://github.com/badlands-model/g-cubed-2016)
 
 
-When you use **Badlands**, please cite the above papers.
+When you use **Badlands** or **BayesLands**, please cite the above papers.
