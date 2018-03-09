@@ -50,7 +50,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	pos_erod = pos_erod[int(burnin):]
 	pos_rain = pos_rain[int(burnin):]
 
-	nb_bins=30
+	nb_bins=10
 	slen = np.arange(0,len(pos_likl),1)
 	#print 'slen', slen
 	font = 9

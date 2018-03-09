@@ -67,11 +67,11 @@ class Crater_MCMC():
 		self.initial_m = []
 		self.initial_n = []
 
-		self.step_rain = 0.1
-		self.step_erod = 1.e-5
+		self.step_rain = (rainlimits[1]-erodlimits[0])*0.05
+		self.step_erod = (erodlimits[1] - erodlimits[0])*0.05
 		self.step_m = 0.05
 		self.step_n = 0.05
-		self.step_eta = 0.007
+		self.step_eta = 0
 
 		self.sim_interval = np.arange(0, self.simtime+1, 1000)
 
@@ -370,9 +370,9 @@ class Crater_MCMC():
 		num_div = 0
 
 		# Generating close to real values
-		rain = np.random.uniform(6.01,6.21)
+		rain = np.random.uniform(3.3,3.4)
 		print 'rain initial value', rain		
-		erod = np.random.uniform(49.e-5,51.e-5)
+		erod = np.random.uniform(3.e-5,4.e-5)
 		print 'erod initial value', erod		
 		# m = np.random.uniform(0.49,0.51)
 		m = 0.5
@@ -412,6 +412,7 @@ class Crater_MCMC():
 		# Calculating eta and tau / Geofffrey's Prior for Tausq
 		eta = np.log(np.var(init_pred_elev_vec[self.simtime] - real_elev))
 		print 'eta = ', eta
+		self.step_eta = eta * 0.05
 		tau_pro = np.exp(eta)
 		prior_likelihood = 1
 
@@ -492,7 +493,7 @@ class Crater_MCMC():
 
 			# Updating eta and and recalculating tau for proposal (pro)
 			eta_pro = eta + np.random.normal(0, self.step_eta, 1)
-			#print 'eta_pro', eta_pro
+			print 'eta_pro', eta_pro
 			tau_pro = math.exp(eta_pro)
 			#print 'tau_pro ', tau_pro
 
@@ -612,11 +613,11 @@ def main():
 	random.seed(time.time())
 	muted = True
 	xmlinput = 'crater.xml'
-	simtime = 5000
+	simtime = 75000
 	samples = 10000
 	run_nb = 0
-	rainlimits = [6,8]
-	erodlimits = [3.e-4,8.e-4]
+	rainlimits = [0,5]
+	erodlimits = [1.e-5,9.e-5]
 	mlimit = [0 , 2]
 	nlimit = [0 , 4]
 

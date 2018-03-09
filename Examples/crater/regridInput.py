@@ -17,10 +17,10 @@ import pybadlands_companion.resizeInput as resize
 def rescale():
 	
 	# Load python class and set required resolution
-	newRes = resize.resizeInput(requestedSpacing = 20)
+	newRes = resize.resizeInput(requestedSpacing = 5)
 
 	# Regrid DEM file
-	newRes.regridDEM(inDEM='data/nodes.csv',outDEM='newnodes.csv')
+	newRes.regridDEM(inDEM='data/res_crater.csv',outDEM='newnodes.csv')
 
 	# Regrid Rain file
 	# newRes.regridRain(inRain='data/rain.csv',outRain='newrain.csv')

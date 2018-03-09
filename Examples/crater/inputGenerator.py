@@ -58,7 +58,7 @@ def inputGenerator(fname, x, y, size, res_fact= None, max_coord= None):
 
 def main():
 
-	inputGenerator('data/res_crater.csv', 150, 150, 50, 10, 2400)
+	inputGenerator('data/res_crater.csv', 0, 0, 2400, 10, 2400)
 	
 	print 'Finished'
 

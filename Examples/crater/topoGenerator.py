@@ -109,6 +109,8 @@ def topoGenerator(inputname, outputname, rain, erodibility, m, n, etime):
     
     np.savetxt('data/%s.txt' %(outputname),mat,fmt='%.5f')
 
+    viewGrid('Final', 'N/A', rreal, ereal, width=1000, height=1000, zmin=-10, zmax=600, zData=mat, title='Export Slope Grid')
+
     return
 
 def inputVisualisation(inputname, outputname, rain, erodibility, m, n, etime = 0):
@@ -189,8 +191,10 @@ def main():
     choice = input('Would you like to: \n 1) Generate a simulated final topography \n 2) Visualise the initial topography \n ')
 
     if choice == 1:
-        topoGenerator('crater.xml', 'final', 7, 5.e-4, 0.5, 1, 5000)
+        tstart = time.clock()
+        topoGenerator('crater.xml', 'final', 2, 5.e-5, 0.5, 1, 75000)
+        print 'TopoGenerator model took (s):',time.clock()-tstart
     else:  
-        inputVisualisation('crater.xml','initial', 7, 5.e-4, 0.5, 1, 0)
+        inputVisualisation('crater.xml','initial', 2, 5.e-5, 0.5, 1, 0)
 
 if __name__ == "__main__": main()
