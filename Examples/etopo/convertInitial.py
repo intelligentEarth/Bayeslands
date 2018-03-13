@@ -26,7 +26,7 @@ import time
 import itertools
 
 
-def convertInitial(fname, res_fact,  reduce_factor):
+def convertInitial(fname, res_fact, reduce_factor):
 	
 	arr = np.loadtxt(fname)
 	new_arr = np.zeros((arr.shape[0],arr.shape[1]))
@@ -47,7 +47,7 @@ def convertInitial(fname, res_fact,  reduce_factor):
 
 def main():
 
-	convertInitial('data/final.txt', res_fact = 10, reduce_factor = 2 )
+	convertInitial('data/initial_elev.txt', res_fact = 4000, reduce_factor = 1 )
 	
 	print 'Finished'
 

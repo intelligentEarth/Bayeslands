@@ -103,11 +103,11 @@ def topoGenerator(inputname, outputname, rain, erodibility, m, n, etime):
     elev_mat=np.matrix(elev)
     erodep_mat=np.matrix(erodep)
 
-    np.savetxt('data/%selev.txt' %(outputname),elev_mat,fmt='%.5f')
-    np.savetxt('data/%serodep.txt' %(outputname),erodep_mat,fmt='%.5f')
+    np.savetxt('data/%s_elev.txt' %(outputname),elev_mat,fmt='%.5f')
+    np.savetxt('data/%s_erodep.txt' %(outputname),erodep_mat,fmt='%.5f')
 
-    viewGrid('Final Elev', 'N/A', rreal, ereal, width=1000, height=1000, zmin=-500, zmax=600, zData=elev_mat, title='Export Slope Grid')
-    viewMap('Final Erodep', 'N/A', rreal, ereal, width=1000, height=1000, zmin=-500, zmax=600, zData=erodep_mat, title='Export Slope Grid')
+    viewGrid('%s_elev' %(outputname), 'N/A', rreal, ereal, width=1000, height=1000, zmin=100, zmax=800, zData=elev_mat, title='Export Slope Grid')
+    viewMap('%s_erodep' %(outputname), 'N/A', rreal, ereal, width=1000, height=1000, zmin=-500, zmax=600, zData=erodep_mat, title='Export Slope Grid')
 
     return
 
@@ -120,16 +120,16 @@ def inputVisualisation(inputname, outputname, rain, erodibility, m, n, etime = 0
     rreal = rain
     ereal = erodibility
 
-    topoGenerator(inputname, outputname, rain, erodibility, m, n, etime)
+    topoGenerator(inputname, outputname, rreal, ereal, m, n, etime)
 
-    elev = np.loadtxt('data/%selev.txt' %(outputname))
-    erodep = np.loadtxt('data/%serodep.txt' %(outputname))
+    elev = np.loadtxt('data/%s_elev.txt' %(outputname))
+    erodep = np.loadtxt('data/%s_erodep.txt' %(outputname))
     
-    viewGrid('Initial Elev', 'N/A', rreal, ereal, width=1000, height=1000, zmin=-500, zmax=600, zData=elev, title='Export Slope Grid')
-    viewMap('Initial Erodep', 'N/A', rreal, ereal, width=1000, height=1000, zmin=-500, zmax=600, zData=erodep, title='Export Slope Grid')
+    viewGrid('%s_elev' %(outputname), 'N/A', rreal, ereal, width=1000, height=1000, zmin=100, zmax=800, zData=elev, title='Export Slope Grid')
+    viewMap('%s_erodep' %(outputname), 'N/A', rreal, ereal, width=1000, height=1000, zmin=-500, zmax=600, zData=erodep, title='Export Slope Grid')
     return
 
-def viewGrid(sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
+def viewGrid(sample_num, likl, rain, erod, width = 1000, height = 1000, zmin = None, zmax = None, zData = None, title='Export Grid'):
     """
     Use Plotly library to visualise the grid in 3D.
 
@@ -161,10 +161,10 @@ def viewGrid(sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = N
     """
 
     if zmin == None:
-        zmin = self.zData.min()
+        zmin = zData.min()
 
     if zmax == None:
-        zmax = self.zData.max()
+        zmax = zData.max()
 
     data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YIGnBu' ) ])
 
@@ -185,24 +185,24 @@ def viewGrid(sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = N
     graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='images/plot_image_%s.html' %(sample_num), validate=False)
     return    
 
-def viewMap(sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
+def viewMap(sample_num, likl, rain, erod, width = 1200, height = 1200, zmin = None, zmax = None, zData = None, title='Export Grid'):
     trace = go.Heatmap(z=zData)
     data=[trace]
-    layout = Layout(
-        title='Crater Erosiondeposition     rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
-        autosize=True,
-        width=width,
-        height=height,
-        scene=Scene(
-            zaxis=ZAxis(range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-            xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-            yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-            bgcolor="rgb(244, 244, 248)"
-        )
-    )
+    # layout = Layout(
+    #     title='Crater Erosiondeposition     rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
+    #     autosize=True,
+    #     width=width,
+    #     height=height,
+    #     scene=Scene(
+    #         zaxis=ZAxis(range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+    #         xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+    #         yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+    #         bgcolor="rgb(244, 244, 248)"
+    #     )
+    # )
 
-    fig = Figure(data=data, layout=layout)
-    graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='images/plot_Hmap_%s.html' %(sample_num), validate=False)
+    # fig = Figure(data=data, layout=layout)
+    graph = plotly.offline.plot(data, auto_open=False, output_type='file', filename='images/plot_heatmap_%s.html' %(sample_num), validate=False)
     return    
 
 def main():
@@ -211,9 +211,10 @@ def main():
 
     if choice == 1:
         tstart = time.clock()
-        topoGenerator('crater.xml', 'final', 2, 5.e-5, 0.5, 1, 75000)
+        topoGenerator('crater.xml', 'final', 1.0 , 1.e-5, 0.5, 1, 100000)
         print 'TopoGenerator model took (s):',time.clock()-tstart
+        
     else:  
-        inputVisualisation('crater.xml','initial', 2, 5.e-5, 0.5, 1, 0)
+        inputVisualisation('crater.xml','initial', 1.0 , 1.e-5, 0.5, 1, 0)
 
 if __name__ == "__main__": main()

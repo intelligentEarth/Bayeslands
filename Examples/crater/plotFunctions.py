@@ -76,7 +76,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	ax.set_title(' Rain Parameter', fontsize=  font+2)#, y=1.02)
 	
 	ax1 = fig.add_subplot(211)
-	ax1.set_facecolor('#f2f2f3')
+	#ax1.set_facecolor('#f2f2f3')
 
 	n, rainbins, patches = ax1.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
 	
@@ -90,7 +90,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	ax1.set_xlabel(r'$\varepsilon$', size= font+1)
 	
 	ax2 = fig.add_subplot(212)
-	ax2.set_facecolor('#f2f2f3')
+	#ax2.set_facecolor('#f2f2f3')
 	ax2.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
 	ax2.set_title(r'Trace of Rain',size= font+2)
 	ax2.set_xlabel('Samples',size= font+1)
@@ -123,7 +123,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	ax.set_title(' Erosion Parameter', fontsize=  font+2)#, y=1.02)
 
 	ax1 = fig.add_subplot(211)
-	ax1.set_facecolor('#f2f2f3')
+	#ax1.set_facecolor('#f2f2f3')
 	
 	n, erodbins, patches = ax1.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
 	
@@ -138,7 +138,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	ax1.set_xlabel(r'$\varepsilon$', size= font+1)
 	
 	ax2 = fig.add_subplot(212)
-	ax2.set_facecolor('#f2f2f3')
+	#ax2.set_facecolor('#f2f2f3')
 	ax2.plot(slen,pos_erod,linestyle='-', linewidth= width, color='k', label=None)
 	ax2.set_title(r'Trace of $\varepsilon$',size= font+2)
 	ax2.set_xlabel('Samples',size= font+1)
@@ -166,7 +166,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
 		
 	ax1 = fig.add_subplot(211)
-	ax1.set_facecolor('#f2f2f3')
+	#ax1.set_facecolor('#f2f2f3')
 	ax1.plot(slen,pos_likl,linestyle='-', linewidth= width, color='k', label=None)
 	ax1.set_title(r'Trace of Likelihood',size= font+2)
 	ax1.set_xlabel('Samples',size= font+1)
@@ -181,7 +181,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	tausmedian=np.median(pos_taus)
 
 	ax2 = fig.add_subplot(212)
-	ax2.set_facecolor('#f2f2f3')
+	#ax2.set_facecolor('#f2f2f3')
 	ax2.plot(slen,pos_taus,linestyle='-', linewidth= width, color='k', label=None)
 	ax2.set_title(r'Trace of Tau sq',size= font+2)
 	ax2.set_xlabel('Samples',size= font+1)
@@ -203,7 +203,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	ax.set_title(' Rain Parameter', fontsize=  font+2)#, y=1.02)
 	
 	ax1 = fig.add_subplot(211, projection = '3d')
-	ax1.set_facecolor('#f2f2f3')
+	#ax1.set_facecolor('#f2f2f3')
 
 	hist, rainedges, erodedges = np.histogram2d(pos_rain, pos_erod, bins = 15 , range = [[rainmin, rainmax],[erodmin, erodmax]])
 	rainpos, erodpos = np.meshgrid(rainedges[:-1], erodedges[:-1])
@@ -213,7 +213,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	drain = 0.5* np.ones_like(zpos)
 	derod = drain.copy()
 	dz = hist.flatten()
-	ax1.bar3d(rainpos, erodpos, zpos, drain, derod, dz, color = 'g', zsort = 'average', shade = True)
+	ax1.bar3d(rainpos, erodpos, zpos, drain, derod, dz, color = 'g', zsort = 'average')
 	#plt.savefig('%sjoint.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
 	#plt.clf()
 

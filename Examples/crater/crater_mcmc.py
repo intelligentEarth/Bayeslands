@@ -48,10 +48,11 @@ from plotly.offline.offline import _plot_html
 import plotly.graph_objs as go
 
 class Crater_MCMC():
-	def __init__(self, muted, simtime, samples, real_elev , filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb):
+	def __init__(self, muted, simtime, samples, real_elev , real_erodep, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb):
 		self.filename = filename
 		self.input = xmlinput
 		self.real_elev = real_elev
+		self.real_erodep = real_erodep
 		self.simtime = simtime
 		self.samples = samples
 		self.run_nb = run_nb
@@ -68,8 +69,8 @@ class Crater_MCMC():
 		self.initial_m = []
 		self.initial_n = []
 
--		self.step_rain = (rainlimits[1]-erodlimits[0])*0.05
--		self.step_erod = (erodlimits[1] - erodlimits[0])*0.05
+		self.step_rain = (rainlimits[1]-erodlimits[0])*0.05
+		self.step_erod = (erodlimits[1] - erodlimits[0])*0.05
 		self.step_m = 0.05
 		self.step_n = 0.05
 		self.step_eta = 0.0
@@ -242,10 +243,10 @@ class Crater_MCMC():
 		"""
 
 		if zmin == None:
-			zmin = self.zData.min()
+			zmin = zData.min()
 
 		if zmax == None:
-			zmax = self.zData.max()
+			zmax = zData.max()
 
 		data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YIGnBu' ) ])
 
@@ -355,9 +356,10 @@ class Crater_MCMC():
 		# Initializing variables
 		samples = self.samples
 		real_elev = self.real_elev
+		real_erodep = self.real_erodep
 
 		# UPDATE PARAMS AS PER EXPERIMENT
-		self.viewGrid('real', 0 , 2, 5.e-5, width=1000, height=1000, zmin=-10, zmax=600, zData=real_elev, title='Real Elevation')
+		self.viewGrid('real', 0 , 2, 5.e-5, width=1000, height=1000, zData=real_elev, title='Real Elevation')
 
 		# Creating storage for data
 		pos_erod = np.zeros(samples)
@@ -370,20 +372,16 @@ class Crater_MCMC():
 
 		num_div = 0
 
-		# Generating close to real values
 		# UPDATE PARAMS AS PER EXPERIMENT
-
-		rain = np.random.uniform(2.1,2.4)
+		rain = np.random.uniform(self.rainlimits[0],self.rainlimits[1])
 		print 'rain initial value', rain		
 		
-		erod = np.random.uniform(5.e-5,6.e-5)
+		erod = np.random.uniform(self.erodlimits[0],self.erodlimits[1])
 		print 'erod initial value', erod		
 		
-		# m = np.random.uniform(0.49,0.51)
 		m = 0.5
 		print 'm initial value', m
 		
-		# n = np.random.uniform(0.99,1.01)
 		n = 1.0
 		print 'n initial value', n
 
@@ -439,7 +437,7 @@ class Crater_MCMC():
 		# Saving parameters for Initial run
 		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_tau[0], pos_likl[0]) #, pos_rmse[0])
 
-		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zmin=-10, zmax=600, zData=pred_elev[self.simtime], title='Export Slope Grid')
+		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zData=pred_elev[self.simtime], title='Export Slope Grid')
 
 		start = time.time()
 
@@ -586,7 +584,7 @@ class Crater_MCMC():
 			sum_elev[k] = np.divide(sum_elev[k], num_div)
 			mean_pred_elevation = sum_elev[k]
 			np.savetxt(self.filename+'/mean_pred_elev_%s.txt' %(k), mean_pred_elevation, fmt='%.5f')
-			self.viewGrid('mean_pred_elevation%s' %(k), 'Mean Elevation_%s' %(k), '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
+			self.viewGrid('mean_pred_elevation%s' %(k), 'Mean Elevation_%s' %(k), '-', '-', width=1000, height=1000, zData=mean_pred_elevation, title='Export Slope Grid ')
 
 		# print 'divisor', samples - burnsamples -2
 		# mean_pred_elevation = np.divide(sum_elevation, samples-burnsamples-2)
@@ -634,12 +632,13 @@ def main():
 		os.makedirs('mcmcresults_%s/plots' % (run_nb))
 		filename = ('mcmcresults_%s' % (run_nb))
 
-	final_elev = np.loadtxt('data/final.txt')
+	final_elev = np.loadtxt('data/final_elev.txt')
+	final_erodep = np.loadtxt('data/final_erodep.txt')
 
 	print 'Input file shape', final_elev.shape
 	run_nb_str = 'mcmcresults_' + str(run_nb)
 
-	crater_mcmc = Crater_MCMC(muted, simtime, samples, final_elev, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str)
+	crater_mcmc = Crater_MCMC(muted, simtime, samples, final_elev, final_erodep, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str)
 	[pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_likl, accept_ratio, accepted_count] = crater_mcmc.sampler() #pos_rmse,
 
 	print 'successfully sampled'

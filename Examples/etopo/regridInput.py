@@ -20,7 +20,7 @@ def rescale():
 	newRes = resize.resizeInput(requestedSpacing = 500)
 
 	# Regrid DEM file
-	newRes.regridDEM(inDEM='data/res_etopo.csv',outDEM='data/newnodes.csv')
+	newRes.regridDEM(inDEM='data/nodes.csv',outDEM='data/newnodes.csv')
 
 	# Regrid Rain file
 	# newRes.regridRain(inRain='data/rain.csv',outRain='newrain.csv')
