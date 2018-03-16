@@ -109,7 +109,7 @@ def topoGenerator(inputname, outputname, rain, erodibility, m, n, etime):
     
     np.savetxt('data/%s.txt' %(outputname),mat,fmt='%.5f')
 
-    viewGrid('Final', 'N/A', rreal, ereal, width=1000, height=1000, zmin=-10, zmax=600, zData=mat, title='Export Slope Grid')
+    #viewGrid('Final', 'N/A', rreal, ereal, width=1000, height=1000, zmin=-10, zmax=600, zData=mat, title='Export Slope Grid')
 
     return
 

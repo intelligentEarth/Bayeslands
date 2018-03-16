@@ -80,7 +80,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 
 	n, rainbins, patches = ax1.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
 	
-	rain_real_value = 7.0
+	rain_real_value = 2.0
 	ax1.axvline(rain_real_value)
 	# rainy = mlab.normpdf(rainbins, rainm, rains)
 	# l = ax1.plot(rainbins, rainy, 'r--', linewidth= width)
@@ -128,7 +128,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	n, erodbins, patches = ax1.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
 	
 
-	erod_real_value = 5.e-4
+	erod_real_value = 5.e-5
 	ax1.axvline(erod_real_value)
 	# erody = mlab.normpdf(erodbins, erodm, erods)
 	# l = ax1.plot(erodbins, erody, 'r--', linewidth= width)

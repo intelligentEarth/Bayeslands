@@ -67,8 +67,8 @@ class Crater_MCMC():
 		self.initial_m = []
 		self.initial_n = []
 
-		self.step_rain = (rainlimits[1]-erodlimits[0])*0.05
-		self.step_erod = (erodlimits[1] - erodlimits[0])*0.05
+		self.step_rain = (rainlimits[1]-erodlimits[0])*0.25
+		self.step_erod = (erodlimits[1] - erodlimits[0])*0.25
 		self.step_m = 0.05
 		self.step_n = 0.05
 		self.step_eta = 0
@@ -355,7 +355,7 @@ class Crater_MCMC():
 		samples = self.samples
 		real_elev = self.real_elev
 
-		self.viewGrid('real', 0 , 7, 5.e-4, width=1000, height=1000, zmin=-10, zmax=600, zData=real_elev, title='Real Elevation')
+		self.viewGrid('real', 0 , 2, 5.e-4, width=1000, height=1000, zmin=-10, zmax=600, zData=real_elev, title='Real Elevation')
 
 		# Creating storage for data
 		pos_erod = np.zeros(samples)
@@ -614,7 +614,7 @@ def main():
 	muted = True
 	xmlinput = 'crater.xml'
 	simtime = 75000
-	samples = 10000
+	samples = 30000
 	run_nb = 0
 	rainlimits = [0,5]
 	erodlimits = [1.e-5,9.e-5]
