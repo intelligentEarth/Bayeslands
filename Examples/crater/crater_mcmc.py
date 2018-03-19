@@ -45,12 +45,14 @@ import plotly.plotly as py
 from plotly.graph_objs import *
 plotly.offline.init_notebook_mode()
 from plotly.offline.offline import _plot_html
+import plotly.graph_objs as go
 
 class Crater_MCMC():
-	def __init__(self, muted, simtime, samples, real_elev , filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb):
+	def __init__(self, muted, simtime, samples, real_elev , real_erodep, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb):
 		self.filename = filename
 		self.input = xmlinput
 		self.real_elev = real_elev
+		self.real_erodep = real_erodep
 		self.simtime = simtime
 		self.samples = samples
 		self.run_nb = run_nb
@@ -71,7 +73,7 @@ class Crater_MCMC():
 		self.step_erod = (erodlimits[1] - erodlimits[0])*0.25
 		self.step_m = 0.05
 		self.step_n = 0.05
-		self.step_eta = 0
+		self.step_eta = 0.0
 
 		self.sim_interval = np.arange(0, self.simtime+1, 1000)
 
@@ -241,10 +243,10 @@ class Crater_MCMC():
 		"""
 
 		if zmin == None:
-			zmin = self.zData.min()
+			zmin = zData.min()
 
 		if zmax == None:
-			zmax = self.zData.max()
+			zmax = zData.max()
 
 		data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YIGnBu' ) ])
 
@@ -265,7 +267,7 @@ class Crater_MCMC():
 		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/plots/plot_image_%s.html' %(self.filename, sample_num), validate=False)
 		return
 
-	def save_accepted_params(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_rmse, pos_tau, pos_likl):
+	def save_accepted_params(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_likl): #pos_rmse,
 		pos_rain = str(pos_rain)
 		if not os.path.isfile(('%s/accept_rain.txt' % (self.filename))):
 			with file(('%s/accept_rain.txt' % (self.filename)),'w') as outfile:
@@ -306,15 +308,15 @@ class Crater_MCMC():
 				outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_n)
 
-		pos_rmse = str(pos_rmse)
-		if not os.path.isfile(('%s/accept_rmse.txt' % (self.filename))):
-			with file(('%s/accept_rmse.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_rmse)
-		else:
-			with file(('%s/accept_rmse.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_rmse)
+		# pos_rmse = str(pos_rmse)
+		# if not os.path.isfile(('%s/accept_rmse.txt' % (self.filename))):
+		# 	with file(('%s/accept_rmse.txt' % (self.filename)),'w') as outfile:
+		# 		outfile.write('\n# {0}\t'.format(naccept))
+		# 		outfile.write(pos_rmse)
+		# else:
+		# 	with file(('%s/accept_rmse.txt' % (self.filename)),'a') as outfile:
+		# 		outfile.write('\n# {0}\t'.format(naccept))
+		# 		outfile.write(pos_rmse)
 
 		pos_tau = str(pos_tau)
 		if not os.path.isfile(('%s/accept_taus.txt' % (self.filename))):
@@ -343,19 +345,21 @@ class Crater_MCMC():
 	def likelihood_func(self,input_vector, real_elev, tausq):
 		pred_elev_vec, pred_erodep_vec = self.blackbox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
 
-		rmse = 0 #self.rmse(pred_elev, real_elev)
+		#rmse = 0 #self.rmse(pred_elev, real_elev)
 		
 		likelihood = - 0.5 * np.log(2* math.pi * tausq) - 0.5 * np.square(pred_elev_vec[self.simtime] - real_elev) / tausq
 
-		return [np.sum(likelihood), pred_elev_vec, rmse]
+		return [np.sum(likelihood), pred_elev_vec, pred_erodep_vec]
 
 	def sampler(self):
 		
 		# Initializing variables
 		samples = self.samples
 		real_elev = self.real_elev
+		real_erodep = self.real_erodep
 
-		self.viewGrid('real', 0 , 2, 5.e-4, width=1000, height=1000, zmin=-10, zmax=600, zData=real_elev, title='Real Elevation')
+		# UPDATE PARAMS AS PER EXPERIMENT
+		self.viewGrid('real', 0 , 2, 5.e-5, width=1000, height=1000, zData=real_elev, title='Real Elevation')
 
 		# Creating storage for data
 		pos_erod = np.zeros(samples)
@@ -366,18 +370,18 @@ class Crater_MCMC():
 		# List of accepted samples
 		count_list = []
 
-		#
 		num_div = 0
 
-		# Generating close to real values
-		rain = np.random.uniform(3.3,3.4)
+		# UPDATE PARAMS AS PER EXPERIMENT
+		rain = np.random.uniform(self.rainlimits[0],self.rainlimits[1])
 		print 'rain initial value', rain		
-		erod = np.random.uniform(3.e-5,4.e-5)
+		
+		erod = np.random.uniform(self.erodlimits[0],self.erodlimits[1])
 		print 'erod initial value', erod		
-		# m = np.random.uniform(0.49,0.51)
+		
 		m = 0.5
 		print 'm initial value', m
-		# n = np.random.uniform(0.99,1.01)
+		
 		n = 1.0
 		print 'n initial value', n
 
@@ -412,16 +416,18 @@ class Crater_MCMC():
 		# Calculating eta and tau / Geofffrey's Prior for Tausq
 		eta = np.log(np.var(init_pred_elev_vec[self.simtime] - real_elev))
 		print 'eta = ', eta
-		self.step_eta = eta * 0.05
+
+		self.step_eta = eta*0.05
+
 		tau_pro = np.exp(eta)
 		prior_likelihood = 1
 
 		#  Passing initial variables along with tau to calculate likelihood and rmse
-		[likelihood, pred_elev, rmse] = self.likelihood_func(v_proposal, real_elev, tau_pro)
-		print '\tinitial likelihood:', likelihood, 'and initial rmse:', rmse
+		[likelihood, pred_elev, pred_erodep] = self.likelihood_func(v_proposal, real_elev, tau_pro)
+		print '\tinitial likelihood:', likelihood #, 'and initial rmse:', rmse
 
 		# Storing RMSE, tau values and adding initial run to accepted list
-		pos_rmse = np.full(samples, rmse)
+		#pos_rmse = np.full(samples, rmse)
 		pos_tau = np.full(samples, tau_pro)
 		pos_likl = np.zeros(samples, likelihood)
 		count_list.append(0)
@@ -429,9 +435,9 @@ class Crater_MCMC():
 		prev_acpt_elev = deepcopy(pred_elev)
 		
 		# Saving parameters for Initial run
-		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_rmse[0], pos_tau[0], pos_likl[0])
+		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_tau[0], pos_likl[0]) #, pos_rmse[0])
 
-		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zmin=-10, zmax=600, zData=pred_elev[self.simtime], title='Export Slope Grid')
+		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zData=pred_elev[self.simtime], title='Export Slope Grid')
 
 		start = time.time()
 
@@ -493,12 +499,12 @@ class Crater_MCMC():
 
 			# Updating eta and and recalculating tau for proposal (pro)
 			eta_pro = eta + np.random.normal(0, self.step_eta, 1)
-			print 'eta_pro', eta_pro
+			#print 'eta_pro', eta_pro
 			tau_pro = math.exp(eta_pro)
 			#print 'tau_pro ', tau_pro
 
 			# Passing paramters to calculate likelihood and rmse with new tau
-			[likelihood_proposal, pred_elev, rmse] = self.likelihood_func(v_proposal, real_elev, tau_pro)
+			[likelihood_proposal, pred_elev, pred_erodep] = self.likelihood_func(v_proposal, real_elev, tau_pro)
 
 			# Difference in likelihood from previous accepted proposal
 			diff_likelihood = likelihood_proposal - likelihood
@@ -525,16 +531,16 @@ class Crater_MCMC():
 				m = p_m
 				n = p_n
 
-				print  '(Sampler) likelihood:',likelihood, ' and rmse:', rmse, 'accepted'
+				print  '(Sampler) likelihood:',likelihood #, ' and rmse:', rmse, 'accepted'
 				pos_erod[i+1] = erod
 				pos_rain[i+1] = rain
 				pos_m[i+1] = m
 				pos_n[i+1] = n
 				pos_tau[i + 1,] = tau_pro
-				pos_rmse[i + 1,] = rmse
+				#pos_rmse[i + 1,] = rmse
 				pos_likl[i + 1,] = likelihood
 				
-				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_rmse[i+1,],pos_tau[i+1,], pos_likl[i+1,]) #Save accepted parameters in accept file
+				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_tau[i+1,], pos_likl[i+1,]) # pos_rmse[i+1,], Save accepted parameters in accept file
 				
 				#Save the previous accepted to current in case next is rejected
 				prev_acpt_elev.update(pred_elev)
@@ -544,7 +550,6 @@ class Crater_MCMC():
 						sum_elev[k] += v
 
 					# sum_elevation = sum_elevation + pred_elev[self.simtime]
-
 					# if sum_elev[self.simtime].all() == sum_elevation.all():
 					# 	print 'TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE'
 
@@ -556,17 +561,16 @@ class Crater_MCMC():
 				pos_m[i+1] = pos_m[i]
 				pos_n[i+1] = pos_n[i]
 				pos_tau[i + 1,] = pos_tau[i,]
-				pos_rmse[i + 1,] = pos_rmse[i,]
+				#pos_rmse[i + 1,] = pos_rmse[i,]
 				pos_likl[i + 1,] = pos_likl[i,]
 				
-				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_rmse[i+1,],pos_tau[i+1,], pos_likl[i+1,]) #Save last accepted parameters in accept file
+				self.save_accepted_params(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_tau[i+1,], pos_likl[i+1,]) #Save last accepted parameters in accept file # pos_rmse[i+1,],
 				
 				if i>burnsamples:
 					for k, v in prev_acpt_elev.items():
 						sum_elev[k] += v
 
 					# sum_elevation = sum_elevation + prev_acpt_elev[self.simtime]
-
 					# if sum_elev[self.simtime].all() == sum_elevation.all():
 					# 	print 'THIS IS ALSO TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE'
 
@@ -580,7 +584,7 @@ class Crater_MCMC():
 			sum_elev[k] = np.divide(sum_elev[k], num_div)
 			mean_pred_elevation = sum_elev[k]
 			np.savetxt(self.filename+'/mean_pred_elev_%s.txt' %(k), mean_pred_elevation, fmt='%.5f')
-			self.viewGrid('mean_pred_elevation%s' %(k), 'Mean Elevation_%s' %(k), '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
+			self.viewGrid('mean_pred_elevation%s' %(k), 'Mean Elevation_%s' %(k), '-', '-', width=1000, height=1000, zData=mean_pred_elevation, title='Export Slope Grid ')
 
 		# print 'divisor', samples - burnsamples -2
 		# mean_pred_elevation = np.divide(sum_elevation, samples-burnsamples-2)
@@ -589,7 +593,7 @@ class Crater_MCMC():
 
 
 		burnin = 0.05 * samples  # use post burn in samples
-		pos_rmse = pos_rmse[int(burnin):,]
+		#pos_rmse = pos_rmse[int(burnin):,]
 		pos_tau = pos_tau[int(burnin):, ]
 		pos_likl = pos_likl[int(burnin):,]
 		pos_erod = pos_erod[int(burnin):]
@@ -606,17 +610,17 @@ class Crater_MCMC():
 		print len(count_list) / (samples * 0.01), '% was accepted'
 		accept_ratio = accepted_count / (samples * 1.0) * 100
 
-		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, pos_likl, accept_ratio, accepted_count)
+		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_likl, accept_ratio, accepted_count) #pos_rmse,
 	
 def main():
 
 	random.seed(time.time())
 	muted = True
 	xmlinput = 'crater.xml'
-	simtime = 75000
-	samples = 30000
+	simtime = 5000
+	samples = 20
 	run_nb = 0
-	rainlimits = [0,5]
+	rainlimits = [1,5]
 	erodlimits = [1.e-5,9.e-5]
 	mlimit = [0 , 2]
 	nlimit = [0 , 4]
@@ -628,13 +632,14 @@ def main():
 		os.makedirs('mcmcresults_%s/plots' % (run_nb))
 		filename = ('mcmcresults_%s' % (run_nb))
 
-	final_elev = np.loadtxt('data/final.txt')
+	final_elev = np.loadtxt('data/final_elev.txt')
+	final_erodep = np.loadtxt('data/final_erodep.txt')
 
 	print 'Input file shape', final_elev.shape
 	run_nb_str = 'mcmcresults_' + str(run_nb)
 
-	crater_mcmc = Crater_MCMC(muted, simtime, samples, final_elev, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str)
-	[pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_rmse, pos_likl, accept_ratio, accepted_count] = crater_mcmc.sampler()
+	crater_mcmc = Crater_MCMC(muted, simtime, samples, final_elev, final_erodep, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str)
+	[pos_rain, pos_erod, pos_m, pos_n, pos_tau, pos_likl, accept_ratio, accepted_count] = crater_mcmc.sampler() #pos_rmse,
 
 	print 'successfully sampled'
 

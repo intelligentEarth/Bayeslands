@@ -22,3 +22,7 @@ doc/_build/
 tags
 doc/env/
 Examples/crater/mcmcresults_*
+Examples/crater_
+Examples/crater_res20
+Examples/crater_hessian/mcmcresults_*
+Examples/crater_hessian/res_bruteForce*
