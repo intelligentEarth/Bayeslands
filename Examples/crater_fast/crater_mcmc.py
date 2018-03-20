@@ -69,8 +69,8 @@ class Crater_MCMC():
 		self.initial_m = []
 		self.initial_n = []
 
-		self.step_rain = (rainlimits[1]- rainlimits[0])*0.005
-		self.step_erod = (erodlimits[1] - erodlimits[0])*0.005
+		self.step_rain = (rainlimits[1]- rainlimits[0])*0.01
+		self.step_erod = (erodlimits[1] - erodlimits[0])*0.01
 		self.step_m = 0.05
 		self.step_n = 0.05
 		self.step_eta_elev = 0.0
@@ -662,7 +662,7 @@ class Crater_MCMC():
 		print len(count_list) / (samples * 0.01), '% was accepted'
 		accept_ratio = accepted_count / (samples * 1.0) * 100
 
-		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erodep , pos_likl, accept_ratio, accepted_count) #pos_rmse,
+		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erodep , pos_likl, accept_ratio, accepted_count,count_list) #pos_rmse,
 	
 def main():
 

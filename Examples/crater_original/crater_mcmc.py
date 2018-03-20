@@ -662,7 +662,7 @@ class Crater_MCMC():
 		print len(count_list) / (samples * 0.01), '% was accepted'
 		accept_ratio = accepted_count / (samples * 1.0) * 100
 
-		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erodep , pos_likl, accept_ratio, accepted_count) #pos_rmse,
+		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erodep , pos_likl, accept_ratio, accepted_count,count_list) #pos_rmse,
 	
 def main():
 
