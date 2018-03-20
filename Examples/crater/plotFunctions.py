@@ -77,10 +77,11 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	
 	ax1 = fig.add_subplot(211)
 	#ax1.set_facecolor('#f2f2f3')
+	ax1.set_axis_bgcolor("white")
 
 	n, rainbins, patches = ax1.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
 	
-	rain_real_value = 2.0
+	rain_real_value = 1.5
 	ax1.axvline(rain_real_value)
 	# rainy = mlab.normpdf(rainbins, rainm, rains)
 	# l = ax1.plot(rainbins, rainy, 'r--', linewidth= width)
@@ -91,6 +92,8 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	
 	ax2 = fig.add_subplot(212)
 	#ax2.set_facecolor('#f2f2f3')
+	ax2.set_axis_bgcolor("white")
+	
 	ax2.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
 	ax2.set_title(r'Trace of Rain',size= font+2)
 	ax2.set_xlabel('Samples',size= font+1)
@@ -124,6 +127,8 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 
 	ax1 = fig.add_subplot(211)
 	#ax1.set_facecolor('#f2f2f3')
+	ax1.set_axis_bgcolor("white")
+	
 	
 	n, erodbins, patches = ax1.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
 	
@@ -139,6 +144,9 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	
 	ax2 = fig.add_subplot(212)
 	#ax2.set_facecolor('#f2f2f3')
+	ax2.set_axis_bgcolor("white")
+	
+
 	ax2.plot(slen,pos_erod,linestyle='-', linewidth= width, color='k', label=None)
 	ax2.set_title(r'Trace of $\varepsilon$',size= font+2)
 	ax2.set_xlabel('Samples',size= font+1)
@@ -167,6 +175,8 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 		
 	ax1 = fig.add_subplot(211)
 	#ax1.set_facecolor('#f2f2f3')
+	ax1.set_axis_bgcolor("white")
+	
 	ax1.plot(slen,pos_likl,linestyle='-', linewidth= width, color='k', label=None)
 	ax1.set_title(r'Trace of Likelihood',size= font+2)
 	ax1.set_xlabel('Samples',size= font+1)
@@ -182,6 +192,8 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 
 	ax2 = fig.add_subplot(212)
 	#ax2.set_facecolor('#f2f2f3')
+	ax2.set_axis_bgcolor("white")
+	
 	ax2.plot(slen,pos_taus,linestyle='-', linewidth= width, color='k', label=None)
 	ax2.set_title(r'Trace of Tau sq',size= font+2)
 	ax2.set_xlabel('Samples',size= font+1)
@@ -204,6 +216,8 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_taus):
 	
 	ax1 = fig.add_subplot(211, projection = '3d')
 	#ax1.set_facecolor('#f2f2f3')
+	ax1.set_axis_bgcolor("white")
+	
 
 	hist, rainedges, erodedges = np.histogram2d(pos_rain, pos_erod, bins = 15 , range = [[rainmin, rainmax],[erodmin, erodmax]])
 	rainpos, erodpos = np.meshgrid(rainedges[:-1], erodedges[:-1])
@@ -241,7 +255,7 @@ def main():
 	likl_filename = 'mcmcresults_%s/accept_likl.txt' % (run_nb)
 	rain_filename = 'mcmcresults_%s/accept_rain.txt' % (run_nb)
 	erod_filename = 'mcmcresults_%s/accept_erod.txt' % (run_nb)
-	taus_filename = 'mcmcresults_%s/accept_taus.txt' % (run_nb)
+	taus_filename = 'mcmcresults_%s/accept_tau_elev.txt' % (run_nb)
 	#m_filename = 'mcmcresults_%s/accept_m.txt' % (run_nb)
 	#n_filename = 'mcmcresults_%s/accept_n.txt' % (run_nb)
 	
@@ -274,7 +288,7 @@ def main():
 					rain.append(error)
 				elif lname == 'erod':
 					erod.append(error)
-				elif lname == 'taus':
+				elif lname == 'elev':
 					taus.append(error)	
 
 	print 'length of likl', len(likl)
