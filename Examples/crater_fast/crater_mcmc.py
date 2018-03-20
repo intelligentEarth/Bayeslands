@@ -225,6 +225,7 @@ class Crater_MCMC():
 		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='images/plot_heatmap_%s.html' %(sample_num), validate=False)
 		
 		return
+		
 	def viewGrid(self, sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
 		"""
 		Use Plotly library to visualise the grid in 3D.
@@ -471,7 +472,7 @@ class Crater_MCMC():
 		self.save_accepted_params(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_tau_elev[0], pos_tau_erodep[0] , pos_likl[0]) #, pos_rmse[0])
 
 		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zData=pred_elev[self.simtime], title='Export Slope Grid')
-		self.viewGrid(0, likelihood, rain, erod, width=1000, height=1000, zData=pred_erodep[self.simtime], title='Export Slope Grid')
+		self.viewMap(0, likelihood, rain, erod, width=1000, height=1000, zData=pred_erodep[self.simtime], title='Export Slope Grid')
 
 		start = time.time()
 

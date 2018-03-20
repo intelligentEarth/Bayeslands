@@ -44,7 +44,8 @@ from plotly.graph_objs import *
 plotly.offline.init_notebook_mode()
 from plotly.offline.offline import _plot_html
 import plotly.graph_objs as go
-    
+
+
 def interpolateArray(coords=None, z=None, dz=None):
     """
     Interpolate the irregular spaced dataset from badlands on a regular grid.
@@ -106,8 +107,8 @@ def topoGenerator(inputname, outputname, rain, erodibility, m, n, etime):
     np.savetxt('data/%s_elev.txt' %(outputname),elev_mat,fmt='%.5f')
     np.savetxt('data/%s_erodep.txt' %(outputname),erodep_mat,fmt='%.5f')
 
-    viewGrid('%s_elev' %(outputname), 'N/A', rreal, ereal, width=1000, height=1000, zData=elev_mat, title='Export Slope Grid')
-    viewMap('%s_erodep' %(outputname), 'N/A', rreal, ereal, width=1000, height=1000, zData=erodep_mat, title='Export Slope Grid')
+    viewGrid('%s_elev' %(outputname), 'N/A', rreal, ereal, width=1000, height=1000, zData=elev, title='Export Slope Grid')
+    viewMap('%s_erodep' %(outputname), 'N/A', rreal, ereal, width=1000, height=1000, zData=erodep, title='Export Slope Grid')
 
     return
 
@@ -185,24 +186,32 @@ def viewGrid(sample_num, likl, rain, erod, width = 1000, height = 1000, zmin = N
     graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='images/plot_image_%s.html' %(sample_num), validate=False)
     return    
 
-def viewMap(sample_num, likl, rain, erod, width = 1200, height = 1200, zmin = None, zmax = None, zData = None, title='Export Grid'):
-    trace = go.Heatmap(z=zData)
-    data=[trace]
-    # layout = Layout(
-    #     title='etopo Erosiondeposition     rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
-    #     autosize=True,
-    #     width=width,
-    #     height=height,
-    #     scene=Scene(
-    #         zaxis=ZAxis(range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-    #         xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-    #         yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-    #         bgcolor="rgb(244, 244, 248)"
-    #     )
-    # )
+def viewMap(sample_num, likl, rain, erod, width = 600, height = 600, zmin = None, zmax = None, zData = None, title='Export Grid'):
+    
+    if zmin == None:
+        zmin = zData.min()
 
-    # fig = Figure(data=data, layout=layout)
-    graph = plotly.offline.plot(data, auto_open=False, output_type='file', filename='images/plot_heatmap_%s.html' %(sample_num), validate=False)
+    if zmax == None:
+        zmax = zData.max()
+
+    trace = go.Heatmap(z=zData)
+
+    data=[trace]
+    layout = Layout(
+        title='etopo Erosiondeposition     rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
+        autosize=True,
+        width=width,
+        height=height,
+        scene=Scene(
+            zaxis=ZAxis(range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+            xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+            yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+            bgcolor="rgb(244, 244, 248)"
+        )
+    )
+
+    fig = Figure(data=data, layout=layout)
+    graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='images/plot_heatmap_%s.html' %(sample_num), validate=False)
     return    
 
 def main():
@@ -211,10 +220,10 @@ def main():
 
     if choice == 1:
         tstart = time.clock()
-        topoGenerator('etopo.xml', 'final', 1.0 ,2.5e-6, 0.5, 1, 500000)
+        topoGenerator('etopo.xml', 'final', 1.5 , 5.e-6, 0.5, 1, 500000)
         print 'TopoGenerator model took (s):',time.clock()-tstart
         
     else:  
-        inputVisualisation('etopo.xml','initial', 1.0 , 2.5e-6, 0.5, 1, 0)
+        inputVisualisation('etopo.xml','initial', 1.5 , 5.e-6, 0.5, 1, 0)
 
 if __name__ == "__main__": main()
