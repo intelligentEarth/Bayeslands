@@ -4,7 +4,7 @@
     <!-- Regular grid structure -->
     <grid>
         <!-- Digital elevation model file path -->
-        <demfile>data/res_crater.csv</demfile>
+        <demfile>Examples/crater_fast/data/res_crater.csv</demfile>
         <!-- Boundary type: flat, slope, fixed or wall -->
         <boundary>fixed</boundary>
         <!-- Optional parameter (integer) used to decrease TIN resolution.
