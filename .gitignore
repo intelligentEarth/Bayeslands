@@ -21,7 +21,13 @@ __MACOSX
 doc/_build/
 tags
 doc/env/
+
 Examples/crater/mcmcresults_*
-Examples/crater/res_bruteForce*
 Examples/crater_*/mcmcresults_*
-Examples/crater_*/res_bruteForce*
+Examples/etopo/mcmcresults_*
+Examples/etopo_*/mcmcresults_*
+
+Examples/crater/liklSurface_*
+Examples/crater_*/liklSurface_*
+Examples/etopo/liklSurface_*
+Examples/etopo_*/liklSurface_*
