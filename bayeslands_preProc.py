@@ -15,7 +15,7 @@ import itertools
 import numpy as np
 import cmocean as cmo
 import matplotlib.pyplot as plt
-import pybadlands_companion.resizeInput as resize
+# import pybadlands_companion.resizeInput as resize
 from pylab import rcParams
 from pyBadlands.model import Model as badlandsModel
 from scipy.spatial import cKDTree
@@ -23,12 +23,12 @@ from pyBadlands.model import Model as badlandsModel
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.mplot3d import Axes3D
 
-def convertInitialTXT_CSV(fname, res_fact, reduce_factor):
+def convertInitialTXT_CSV(directory,fname, res_fact, reduce_factor):
 	
 	arr = np.loadtxt(fname)
-	with open('data/convertedInitial_low.csv', 'a') as the_file:
-		for i in range(0, arr.shape[0]-2, reduce_factor):
-			for j in range(0, arr.shape[1]-2, reduce_factor):
+	with open('%s/data/convertedInitial_low.csv' %(directory), 'a') as the_file:
+		for i in xrange(0, arr.shape[0]-2, reduce_factor):
+			for j in xrange(0, arr.shape[1]-2, reduce_factor):
 				x_c = i*res_fact
 				y_c = j*res_fact
 
@@ -37,7 +37,7 @@ def convertInitialTXT_CSV(fname, res_fact, reduce_factor):
 
 	#np.savetxt('data/convert_res_crater.csv', , fmt='%.5f')
 
-def cropTopoCSV(fname, x, y, size, res_fact, max_coord= None):
+def cropTopoCSV(directory,fname, x, y, size, res_fact, max_coord= None):
 
 	x = x/res_fact
 	y = y/res_fact
@@ -59,12 +59,12 @@ def cropTopoCSV(fname, x, y, size, res_fact, max_coord= None):
 	X = list(itertools.chain.from_iterable(newarr))
 	Z = np.vstack(X) 
 	print Z
-	np.savetxt('data/res_crater.csv', Z, fmt='%.5f')
+	np.savetxt('%s/data/res_crater.csv' (directory), Z, fmt='%.5f')
 
-def reduceAmplitude(fname, res_fact, amp_percentage):
+def reduceAmplitude(directory,fname, res_fact, amp_percentage):
 	arr = np.loadtxt(fname)
 	# new_arr = np.zeros((arr.shape[0],arr.shape[1]))
-	with open('data/res_crater_reduced_ampl.csv', 'a') as the_file:
+	with open('%s/data/res_crater_reduced_ampl.csv' %(directory), 'a') as the_file:
 		for i in range(arr.shape[0]-2):
 			for j in range(arr.shape[1]-2):
 				x_c = i*res_fact
@@ -72,7 +72,7 @@ def reduceAmplitude(fname, res_fact, amp_percentage):
 				line = str(float(y_c)) + ' ' + str(float(x_c))+ ' ' + str(float("{0:.3f}".format(arr[i,j]*amp_percentage))) +  '\n'
 				the_file.write(line)
 
-def upScale(fname, res_fact):
+def upScale(directory,fname, res_fact):
 	# Load python class and set required resolution
 	newRes = resize.resizeInput(requestedSpacing = res_fact)
 
@@ -91,34 +91,36 @@ def upScale(fname, res_fact):
 def main():
 
 	functionality = input("Would you like to: \n 1) Resuce Amplitude of Initial/Final topo\n 2) Convert topo TXT to CSV w/ reduction\n 3) Crop Topo CSV file\n 4) Upscale Topo")
-	choice = input("Please choose a Badlands example to apply it to:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
+	choice = input("Please choose a Badlands example to apply it to:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n 5) delta\n")
 	directory = ""
 
 	if choice == 1:
-		directory = 'Examples/crater_fast'
+		directory = 'Examples/crater_fast_3030'
 	elif choice ==2:
 		directory = 'Examples/crater'
 	elif choice ==3:
 		directory = 'Examples/etopo_fast'
 	elif choice ==4:
 		directory = 'Examples/etopo'
-
+	# elif choice ==5:
+	# 	directory = 'Examples/mountain'
+	
 	if functionality == 1:
 			tstart = time.clock()
 			amp_percentage = input("What percentage would you like to decrease the amplitude by?")
 			res_fact = input("Resolution Factor")
 			topo = input("Would you like to apply it to the \n 1) Final topo \n 2) Initial topo")
 			if topo == 1:
-				reduceAmplitude('%s/data/initial_elev.txt'%(directory), res_fact=res_fact, amp_percentage= amp_percentage)
+				reduceAmplitude(directory,'%s/data/initial_elev.txt'%(directory), res_fact=res_fact, amp_percentage= amp_percentage)
 			else:
-				reduceAmplitude('%s/data/final_elev.txt'%(directory), res_fact=res_fact, amp_percentage= amp_percentage)				
+				reduceAmplitude(directory,'%s/data/final_elev.txt'%(directory), res_fact=res_fact, amp_percentage= amp_percentage)				
 			print 'Task completed in (s):',time.clock()-tstart	
 
 	elif functionality == 2:
 			tstart = time.clock()
 			reduce_factor = input("What should the reduction factor be?")
 			res_fact = input("Resolution Factor")
-			convertInitialTXT_CSV('%s/data/initial_elev.txt' %(directory), res_fact = res_fact, reduce_factor = 1)
+			convertInitialTXT_CSV(directory,'%s/data/initial_elev.txt' %(directory), res_fact = res_fact, reduce_factor = reduce_factor)
 			print 'Task completed in (s):',time.clock()-tstart
 
 	elif functionality == 3:
@@ -128,13 +130,13 @@ def main():
 			grid_size = input("Size of Grid")
 			res_fact = input("Resolution Factor")
 			max_size = 2400
-			cropTopoCSV('%s/data/res_crater.csv'%(directory), x_coord, y_coord, grid_size, 10, max_size)
+			cropTopoCSV(directory,'%s/data/res_crater.csv'%(directory), x_coord, y_coord, grid_size, 10, max_size)
 			print 'Task completed in (s):',time.clock()-tstart
 
-	elif functionality == 4:
-			tstart = time.clock()
-			res_fact = input("Resolution Factor")
-			upScale('%s/data/res_crater.csv'%(directory), res_fact)
-			print 'Task completed in (s):',time.clock()-tstart
+	# elif functionality == 4:
+	# 		tstart = time.clock()
+	# 		res_fact = input("Resolution Factor")
+	# 		upScale('%s/data/res_crater.csv'%(directory), res_fact)
+	# 		print 'Task completed in (s):',time.clock()-tstart
 
 if __name__ == "__main__": main()

@@ -71,15 +71,15 @@ class bayeslands_mcmc():
 		self.initial_m = []
 		self.initial_n = []
 
-		self.step_rain = (rainlimits[1]- rainlimits[0])*0.01
-		self.step_erod = (erodlimits[1] - erodlimits[0])*0.01
+		self.step_rain = (rainlimits[1]- rainlimits[0])*0.02
+		self.step_erod = (erodlimits[1] - erodlimits[0])*0.02
 		self.step_m = (mlimit[1] - mlimit[0])*0.01
 		self.step_n = (nlimit[1] - nlimit[0])*0.01
 
 		self.sim_interval = np.arange(0, self.simtime+1, 5000)
 		self.burn_in = 0.05
 
-	def blockBox(self, rain, erodibility, m , n):
+	def blackBox(self, rain, erodibility, m , n):
 		"""
 		Main entry point for running badlands model with different forcing conditions.
 		The following forcing conditions can be used:
@@ -324,90 +324,63 @@ class bayeslands_mcmc():
 		
 		"""
 		pos_rain = str(pos_rain)
-		if not os.path.isfile(('%s/accept_rain.txt' % (self.filename))):
-			with file(('%s/accept_rain.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))    
-				outfile.write(pos_rain)
-		else:
-			with file(('%s/accept_rain.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_rain)
-
 		pos_erod = str(pos_erod)
-		if not os.path.isfile(('%s/accept_erod.txt' % (self.filename))):
-			with file(('%s/accept_erod.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))    
-				outfile.write(pos_erod)
-		else:
-			with file(('%s/accept_erod.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_erod)
-
 		pos_m = str(pos_m)
-		if not os.path.isfile(('%s/accept_m.txt' % (self.filename))):
-			with file(('%s/accept_m.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))    
-				outfile.write(pos_m)
-		else:
-			with file(('%s/accept_m.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_m)
-
 		pos_n = str(pos_n)
-		if not os.path.isfile(('%s/accept_n.txt' % (self.filename))):
-			with file(('%s/accept_n.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))    
-				outfile.write(pos_n)
-		else:
-			with file(('%s/accept_n.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_n)
-
 		pos_tau_elev = str(pos_tau_elev)
-		if not os.path.isfile(('%s/accept_tau_elev.txt' % (self.filename))):
-			with file(('%s/accept_tau_elev.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_tau_elev)
-		else:
-			with file(('%s/accept_tau_elev.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_tau_elev)
-
 		pos_tau_erdp = str(pos_tau_erdp)
-		if not os.path.isfile(('%s/accept_tau_erdp.txt' % (self.filename))):
-			with file(('%s/accept_tau_erdp.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_tau_erdp)
-		else:
-			with file(('%s/accept_tau_erdp.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_tau_erdp)
-
 		pos_tau_erdp_pts = str(pos_tau_erdp_pts)
-		if not os.path.isfile(('%s/accept_tau_erdp_pts.txt' % (self.filename))):
-			with file(('%s/accept_tau_erdp_pts.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_tau_erdp_pts)
-		else:
-			with file(('%s/accept_tau_erdp_pts.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_tau_erdp_pts)
-
 		pos_likl = str(pos_likl)
-		if not os.path.isfile(('%s/accept_likl.txt' % (self.filename))):
-			with file(('%s/accept_likl.txt' % (self.filename)),'w') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
+		if not os.path.isfile(('%s/exp_data.txt' % (self.filename))):
+			with file(('%s/exp_data.txt' % (self.filename)),'w') as outfile:
+				# outfile.write('\n# {0}\t'.format(naccept))
+				outfile.write(pos_rain)
+				outfile.write('\t')
+				outfile.write(pos_erod)
+				outfile.write('\t')
 				outfile.write(pos_likl)
+				outfile.write('\t')
+				outfile.write(pos_m)
+				outfile.write('\t')
+				outfile.write(pos_n)
+				outfile.write('\t')
+				outfile.write(pos_tau_elev)
+				outfile.write('\t')
+				outfile.write(pos_tau_erdp)
+				outfile.write('\t')
+				outfile.write(pos_tau_erdp_pts)
+				outfile.write('\n')
+
 		else:
-			with file(('%s/accept_likl.txt' % (self.filename)),'a') as outfile:
-				outfile.write('\n# {0}\t'.format(naccept))
+			with file(('%s/exp_data.txt' % (self.filename)),'a') as outfile:
+				# outfile.write('\n# {0}\t'.format(naccept))
+				outfile.write(pos_rain)
+				outfile.write('\t')
+				outfile.write(pos_erod)
+				outfile.write('\t')
 				outfile.write(pos_likl)
+				outfile.write('\t')
+				outfile.write(pos_m)
+				outfile.write('\t')
+				outfile.write(pos_n)
+				outfile.write('\t')
+				outfile.write(pos_tau_elev)
+				outfile.write('\t')
+				outfile.write(pos_tau_erdp)
+				outfile.write('\t')
+				outfile.write(pos_tau_erdp_pts)
+				outfile.write('\n')
 
 	def likelihoodFunc(self,input_vector, real_elev, real_erdp, real_erdp_pts, tausq_elev, tausq_erdp, tausq_erdp_pts):
 		"""
 		
 		"""
-		pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec = self.blockBox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
+
+		pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec = self.blackBox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
+
+		tausq_elev = (np.sum(np.square(pred_elev_vec[self.simtime] - real_elev)))/real_elev.size
+
+		tausq_erdp_pts = (np.sum(np.square(pred_erdp_pts_vec[self.simtime] - real_erdp_pts)))/real_erdp_pts.size
 		
 		likelihood_elev = -0.5 * np.log(2* math.pi * tausq_elev) - 0.5 * np.square(pred_elev_vec[self.simtime] - real_elev) / tausq_elev
 		
@@ -425,6 +398,8 @@ class bayeslands_mcmc():
 		"""
 		
 		"""
+		start = time.time()
+
 		# Initializing variables
 		samples = self.samples
 		real_elev = self.real_elev
@@ -451,6 +426,9 @@ class bayeslands_mcmc():
 		# UPDATE PARAMS AS PER EXPERIMENT
 		rain = np.random.uniform(self.rainlimits[0],self.rainlimits[1])
 		erod = np.random.uniform(self.erodlimits[0],self.erodlimits[1])
+		# rain = 1.50
+		# erod = 5.e-5
+
 		m = 0.5
 		n = 1.0
 
@@ -467,13 +445,7 @@ class bayeslands_mcmc():
 		v_proposal.append(n)
 
 		# Output predictions from blockBox model
-		init_pred_elev_vec, init_pred_erdp_vec, init_pred_erdp_pts_vec = self.blockBox(v_proposal[0], v_proposal[1], v_proposal[2], v_proposal[3])
-
-		# Calculating eta_elev and tausq / Geofffrey's Prior for tausq_elev
-		# tau_elev = np.var(init_pred_elev_vec[self.simtime] - real_elev)
-		# tau_erdp = np.var(init_pred_erdp_vec[self.simtime] - real_erdp)
-		# eta_elev = np.log(tau_elev)
-		# eta_erdp = np.log(tau_erdp)
+		init_pred_elev_vec, init_pred_erdp_vec, init_pred_erdp_pts_vec = self.blackBox(v_proposal[0], v_proposal[1], v_proposal[2], v_proposal[3])
 
 		eta_elev = np.log(np.var(init_pred_elev_vec[self.simtime] - real_elev))
 		eta_erdp = np.log(np.var(init_pred_erdp_vec[self.simtime] - real_erdp))
@@ -483,9 +455,9 @@ class bayeslands_mcmc():
 		tau_erdp = np.exp(eta_erdp)
 		tau_erdp_pts = np.exp(eta_erdp_pts)
 		
-		step_eta_elev = np.abs(eta_elev*0.01)
-		step_eta_erdp = np.abs(eta_erdp*0.01)
-		step_eta_erdp_pts = np.abs(eta_erdp_pts*0.01)
+		step_eta_elev = np.abs(eta_elev*0.02)
+		step_eta_erdp = np.abs(eta_erdp*0.02)
+		step_eta_erdp_pts = np.abs(eta_erdp_pts*0.02)
 
 		print 'eta_elev = ', eta_elev, 'step_eta_elev', step_eta_elev
 		print 'eta_erdp = ', eta_erdp, 'step_eta_erdp', step_eta_erdp
@@ -494,7 +466,7 @@ class bayeslands_mcmc():
 
 		# Recording experimental conditions
 		with file(('%s/description.txt' % (self.filename)),'a') as outfile:
-			outfile.write('\n\samples: {0}'.format(self.samples))
+			outfile.write('\n\tsamples: {0}'.format(self.samples))
 			outfile.write('\n\tstep_rain: {0}'.format(self.step_rain))
 			outfile.write('\n\tstep_erod: {0}'.format(self.step_erod))
 			outfile.write('\n\tstep_m: {0}'.format(self.step_m))
@@ -532,24 +504,17 @@ class bayeslands_mcmc():
 		# Saving parameters for Initial run
 		self.storeParams(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_tau_elev[0], pos_tau_erdp[0] , pos_tau_erdp_pts[0], pos_likl[0]) #, pos_rmse[0])
 
-		self.viewGrid('first sample elev', likelihood, rain, erod, zData=pred_elev[self.simtime], title='Export Slope Grid')
-		self.viewMap('first sample erdp', likelihood, rain, erod, zData=pred_erdp[self.simtime], title='Export Slope Grid')
-		self.viewBar('first sample erdp_pts', likelihood, rain, erod, xData = self.erdp_coords, yData=pred_erdp_pts[self.simtime], title='Export Slope Grid')
+		# self.viewGrid('first sample elev', likelihood, rain, erod, zData=pred_elev[self.simtime], title='Export Slope Grid')
+		# self.viewMap('first sample erdp', likelihood, rain, erod, zData=pred_erdp[self.simtime], title='Export Slope Grid')
+		# self.viewBar('first sample erdp_pts', likelihood, rain, erod, xData = self.erdp_coords, yData=pred_erdp_pts[self.simtime], title='Export Slope Grid')
 
-		start = time.time()
-
-		# sum_elevation = np.zeros((init_pred_elev_vec[self.simtime].shape[0], init_pred_elev_vec[self.simtime].shape[1]))pred_elev
-		
 		sum_elev = deepcopy(pred_elev)
 		sum_erdp = deepcopy(pred_erdp)
 		sum_erdp_pts = deepcopy(pred_erdp_pts)
-
 		burnsamples = int(samples*0.05)
-
 		count_list.append(0)
 
 		for i in range(samples-1):
-
 			print '\nSample : ', i
 
 			# Updating rain parameter and checking limits
@@ -644,7 +609,7 @@ class bayeslands_mcmc():
 				#pos_rmse[i + 1,] = rmse
 				pos_likl[i + 1,] = likelihood
 				
-				self.storeParams(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_tau_elev[i+1,], pos_tau_erdp[i+1,] , pos_tau_erdp_pts[i+1,], pos_likl[i+1,]) # pos_rmse[i+1,], Save accepted parameters in accept file
+				self.storeParams(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_tau_elev[i+1,], pos_tau_erdp[i+1,] , pos_tau_erdp_pts[i+1,], pos_likl[i+1,])
 				
 				#Save the previous accepted to current in case next is rejected
 				prev_acpt_elev.update(pred_elev)
@@ -661,10 +626,6 @@ class bayeslands_mcmc():
 					for k, v in pred_erdp_pts.items():
 						sum_erdp_pts[k] += v
 					
-					# sum_elevation = sum_elevation + pred_elev[self.simtime]
-					# if sum_elev[self.simtime].all() == sum_elevation.all():
-					# 	print 'TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE'
-
 					num_div += 1
 
 			else: # Reject sample
@@ -675,7 +636,6 @@ class bayeslands_mcmc():
 				pos_tau_elev[i + 1,] = pos_tau_elev[i,]
 				pos_tau_erdp[i + 1,] = pos_tau_erdp[i,]
 				pos_tau_erdp_pts[i + 1,] = pos_tau_erdp_pts[i,]
-				#pos_rmse[i + 1,] = pos_rmse[i,]
 				pos_likl[i + 1,] = pos_likl[i,]
 				
 				self.storeParams(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_tau_elev[i+1,], pos_tau_erdp[i+1,] , pos_tau_erdp_pts[i+1,], pos_likl[i+1,]) #Save last accepted parameters in accept file # pos_rmse[i+1,],
@@ -690,15 +650,9 @@ class bayeslands_mcmc():
 					for k, v in prev_acpt_erdp_pts.items():
 						sum_erdp_pts[k] += v
 					
-					# sum_elevation = sum_elevation + prev_acpt_elev[self.simtime]
-					# if sum_elev[self.simtime].all() == sum_elevation.all():
-					# 	print 'THIS IS ALSO TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE'
-
 					num_div += 1
 
 				print 'REJECTED\n with likelihood: ',likelihood
-		
-		# print 'num_div', num_div
 		
 		for k, v in sum_elev.items():
 			sum_elev[k] = np.divide(sum_elev[k], num_div)
@@ -706,11 +660,15 @@ class bayeslands_mcmc():
 			np.savetxt(self.filename+'/prediction_data/mean_pred_elev_%s.txt' %(k), mean_pred_elevation, fmt='%.5f')
 			self.viewGrid('mean_pred_elevation%s' %(k), 'Mean Elevation_%s' %(k), '-', '-', zData=mean_pred_elevation, title='Export Slope Grid ')
 
+		mse_elev = (np.sum(np.square(sum_elev[self.simtime] - self.real_elev)))/real_elev.size
+
 		for k, v in sum_erdp.items():
 			sum_erdp[k] = np.divide(sum_erdp[k], num_div)
 			mean_pred_erdp = sum_erdp[k]
 			np.savetxt(self.filename+'/prediction_data/mean_pred_erdp_%s.txt' %(k), mean_pred_erdp, fmt='%.5f')
 			self.viewMap('mean_pred_erdp_%s' %(k), 'Mean erdp_%s' %(k), '-', '-', zData=mean_pred_erdp, title='Export Slope Grid ')
+
+		mse_erdp = (np.sum(np.square(sum_erdp[self.simtime] - self.real_erdp)))/real_erdp.size
 
 		for k, v in sum_erdp_pts.items():
 			sum_erdp_pts[k] = np.divide(sum_erdp_pts[k], num_div)
@@ -718,34 +676,25 @@ class bayeslands_mcmc():
 			np.savetxt(self.filename+'/prediction_data/mean_pred_erdp_pts_%s.txt' %(k), mean_pred_erdp_pts, fmt='%.5f')
 			self.viewBar('mean_pred_erdp_pts_%s' %(k), 'Mean erdp pts_%s' %(k), '-', '-',xData = self.erdp_coords , yData=mean_pred_erdp_pts, title='Export Slope Grid ')
 
-		# print 'divisor', samples - burnsamples -2
-		# mean_pred_elevation = np.divide(sum_elevation, samples-burnsamples-2)
-		# np.savetxt(self.filename+'/mean_pred_elevation.txt', mean_pred_elevation, fmt='%.5f')
-		# self.viewGrid('mean_pred_elevation', 'Mean Elevation', '-', '-', width=1000, height=1000, zmin=-10, zmax=600, zData=mean_pred_elevation, title='Export Slope Grid ')
-
-
-		burnin = self.burn_in * samples  # use post burn in samples
-		#pos_rmse = pos_rmse[int(burnin):,]
-		pos_tau_elev = pos_tau_elev[int(burnin):, ]
-		pos_tau_erdp = pos_tau_erdp[int(burnin):, ]
-		pos_tau_erdp_pts = pos_tau_erdp_pts[int(burnin):, ]
-		pos_likl = pos_likl[int(burnin):,]
-		pos_erod = pos_erod[int(burnin):]
-		pos_rain = pos_rain[int(burnin):]
-		pos_m = pos_m[int(burnin):]
-		pos_n = pos_n[int(burnin):]
+		mse_erdp_pts = (np.sum(np.square(sum_erdp_pts[self.simtime] - self.real_erdp_pts)))/real_erdp_pts.size
 
 		end = time.time()
 		total_time = end - start
-		print 'Time elapsed:', total_time
+		total_time_mins = total_time/60
+		print 'Time elapsed: (s)', total_time
 
 		accepted_count =  len(count_list)
 		print accepted_count, ' number accepted'
 		print (count_list)
 		print len(count_list) / (samples * 0.01), '% was accepted'
 		accept_ratio = accepted_count / (samples * 1.0) * 100
-
-		return (pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erdp , pos_tau_erdp_pts, pos_likl, accept_ratio, accepted_count,count_list) #pos_rmse,
+		print 'Results are stored in ', self.filename
+		
+		with file(('%s/experiment_stats.txt' % (self.filename)),'w') as outres:
+			outres.write('MSEelev: {0}\nMSEerdp: {1}\nMSEerdp_pts: {2}\nTime:(s) {3}\nTime:(mins) {4}\n'.format(mse_elev,mse_erdp,mse_erdp_pts,total_time,total_time_mins))
+			outres.write('Accept ratio: {0} %\nSamples accepted : {1} out of {2}\n Count List : {3} '.format(accept_ratio, accepted_count, self.samples, count_list))
+		
+		return
 	
 def main():
 	"""
@@ -756,12 +705,39 @@ def main():
 	run_nb = 0
 	directory = ""
 	likl_sed = False
-	erdp_coords = np.array([ [60,60], [72,66], [85,73], [90,75] ])
+	erdp_coords_crater = np.array([ [60,60], [72,66], [85,73], [90,75] ])
+	erdp_coords_etopo = np.array([ [10,60], [30,30], [60,10], [80,75] ])
 
 	choice = input("Please choose a Badlands example to run the MCMC algorithm on:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
 	samples = input("Please enter number of samples : ")
 
-	if choice == 1:
+	if choice == 0:
+		directory = 'Examples/crater_'
+		xmlinput = '%s/crater.xml' %(directory)
+		simtime = 15000
+		rainlimits = [0.0, 3.0]
+		erodlimits = [3.e-5, 7.e-5]
+		mlimit = [0.4, 0.6]
+		nlimit = [0.9, 1.1]
+		true_rain = 1.5
+		true_erod = 5.e-5
+		likl_sed = True
+		erdp_coords = erdp_coords_crater
+
+	elif choice == 6:
+		directory = 'Examples/etopo_'
+		xmlinput = '%s/etopo.xml' %(directory)
+		simtime = 500000
+		rainlimits = [0.0, 3.0]
+		erodlimits = [3.e-6, 7.e-6]
+		mlimit = [0.4, 0.6]
+		nlimit = [0.9, 1.1]
+		true_rain = 1.5
+		true_erod = 5.e-6
+		likl_sed = True
+		erdp_coords = erdp_coords_etopo
+
+	elif choice == 1:
 		directory = 'Examples/crater_fast'
 		xmlinput = '%s/crater.xml' %(directory)
 		simtime = 15000
@@ -772,6 +748,7 @@ def main():
 		true_rain = 1.5
 		true_erod = 5.e-5
 		likl_sed = True
+		erdp_coords = erdp_coords_crater
 
 	elif choice == 2:
 		directory = 'Examples/crater'
@@ -784,6 +761,7 @@ def main():
 		true_rain = 1.5
 		true_erod = 5.e-5
 		likl_sed = True
+		erdp_coords = erdp_coords_crater
 
 	elif choice == 3:
 		directory = 'Examples/etopo_fast'
@@ -796,6 +774,7 @@ def main():
 		true_rain = 1.5
 		true_erod = 5.e-6
 		likl_sed = True
+		erdp_coords = erdp_coords_etopo
 
 	elif choice == 4:
 		directory = 'Examples/etopo'
@@ -808,6 +787,7 @@ def main():
 		true_rain = 1.5
 		true_erod = 5.e-6
 		likl_sed = True
+		erdp_coords = erdp_coords_etopo
 
 	else:
 		print('Invalid selection, please choose a problem from the list ')
@@ -828,13 +808,8 @@ def main():
 	run_nb_str = 'mcmcresults_' + str(run_nb)
 
 	bl_mcmc = bayeslands_mcmc(muted, simtime, samples, final_elev, final_erdp, final_erdp_pts, erdp_coords, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str, likl_sed)
-	[pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erdp, pos_tau_erdp_pts, pos_likl, accept_ratio, accepted_count, count_list] = bl_mcmc.sampler()
+	bl_mcmc.sampler()
 
-	print '\nsuccessfully sampled'
-
-	with file(('%s/out_results.txt' % (filename)),'w') as outres:
-		outres.write('Accept ratio: {0} %\nSamples accepted : {1} out of {2}\n'.format(accept_ratio, accepted_count, samples))
-
-	print '\nFinished simulations'
+	print '\nsuccessfully sampled\nFinished simulations'
 
 if __name__ == "__main__": main()
