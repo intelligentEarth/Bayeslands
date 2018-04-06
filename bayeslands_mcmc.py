@@ -71,12 +71,12 @@ class bayeslands_mcmc():
 		self.initial_m = []
 		self.initial_n = []
 
-		self.step_rain = (rainlimits[1]- rainlimits[0])*0.02
-		self.step_erod = (erodlimits[1] - erodlimits[0])*0.02
+		self.step_rain = (rainlimits[1]- rainlimits[0])*0.01
+		self.step_erod = (erodlimits[1] - erodlimits[0])*0.01
 		self.step_m = (mlimit[1] - mlimit[0])*0.01
 		self.step_n = (nlimit[1] - nlimit[0])*0.01
 
-		self.sim_interval = np.arange(0, self.simtime+1, 5000)
+		self.sim_interval = np.arange(0, self.simtime+1, self.simtime/4)
 		self.burn_in = 0.05
 
 	def blackBox(self, rain, erodibility, m , n):
@@ -227,7 +227,7 @@ class bayeslands_mcmc():
 		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/plots/erdp_heatmap_%s.html' %(self.filename, sample_num), validate=False)
 		
 		return
-	
+
 	def viewBar(self,sample_num, likl, rain, erod, width = 500, height = 500, xData = None, yData = None, title='Export Grid'):
 		"""
 		Use Plotly library to visualise the BarPlot of Erosion Deposition at certain coordinates.
@@ -265,11 +265,31 @@ class bayeslands_mcmc():
 				bgcolor="rgb(244, 244, 248)"
 			)
 		)
+		
+		print 'yData', yData
+		print 'self.real_erdp_pts', self.real_erdp_pts[-1,:]
+
 		fig = Figure(data=data, layout=layout)
 		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/plots/erdppts_barcht_%s.html' %(self.filename, sample_num), validate=False)
 		
-		return
+		fig, ax = plt.subplots()
+		index = np.arange(self.real_erdp_pts.shape[1])
+		width = 0.35
+		opacity = 0.8 
 		
+		rects1 = plt.bar(index, self.real_erdp_pts[-1,:], width,alpha=opacity,color='b',label='Real')
+		rects2 = plt.bar(index + width, yData, width,alpha=opacity,color='g',label='Predicted with uncertainity') 
+		
+		plt.xlabel('Selected Coordinates')
+		plt.ylabel('Height in meters')
+		plt.title('Erosion Deposition') 
+		plt.legend() 
+		plt.tight_layout() 
+		plt.savefig('%s/plots//pos_erodep_pts_%s.png' %(self.filename, sample_num))
+		plt.clf()
+
+		return
+
 	def viewGrid(self, sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
 		"""
 		Use Plotly library to visualise the grid in 3D.
@@ -308,9 +328,9 @@ class bayeslands_mcmc():
 			width=width,
 			height=height,
 			scene=Scene(
-				zaxis=ZAxis(range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-				xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-				yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+				zaxis=ZAxis(title = 'Elevation (m)',range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+				xaxis=XAxis(title = 'X Distance (km)', nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+				yaxis=YAxis(title = 'Y Distance (km)', nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
 				bgcolor="rgb(244, 244, 248)"
 			)
 		)
@@ -318,6 +338,61 @@ class bayeslands_mcmc():
 		fig = Figure(data=data, layout=layout)
 		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/plots/elev_grid_%s.html' %(self.filename, sample_num), validate=False)
 		return
+
+	def viewCrossSection(self, list_xslice, list_yslice):
+		# print 'list_xslice', list_xslice.shape
+		# print 'list_yslice', list_yslice.shape
+
+		ymid = int(self.real_elev.shape[1]/2 ) #   cut the slice in the middle 
+		xmid = int(self.real_elev.shape[0]/2)
+		# print 'ymid',ymid
+		# print 'xmid', xmid
+		# print(self.real_elev)
+		# print(self.real_elev.shape, ' shape')
+		x_ymid_real = self.real_elev[xmid, :] 
+		x_ymid_mean = list_xslice.mean(axis=1)
+		# print 'x_ymid_mean', x_ymid_mean 
+		# print '\n'
+		y_xmid_real = self.real_elev[:, ymid ] 
+		y_xmid_mean = list_yslice.mean(axis=1)
+		# print( x_ymid_real.shape , ' x_ymid_real shape')
+		# print( x_ymid_mean.shape , ' x_ymid_mean shape')
+		x_ymid_5th = np.percentile(list_xslice, 5, axis=1)
+		x_ymid_95th= np.percentile(list_xslice, 95, axis=1)
+
+		y_xmid_5th = np.percentile(list_yslice, 5, axis=1)
+		y_xmid_95th= np.percentile(list_yslice, 95, axis=1)
+
+		x = np.linspace(0, x_ymid_mean.size , num=x_ymid_mean.size) 
+		x_ = np.linspace(0, y_xmid_mean.size , num=y_xmid_mean.size)
+
+		plt.plot(x, x_ymid_real, label='ground truth') 
+		plt.plot(x, x_ymid_5th, label='pred.(5th percen.)')
+		plt.plot(x, x_ymid_95th, label='pred.(95th percen.)')
+		plt.plot(x, x_ymid_mean, label='pred. (mean)')
+		plt.fill_between(x, x_ymid_5th , x_ymid_95th, facecolor='g', alpha=0.4)
+		plt.legend(loc='upper right')
+
+		plt.title("Uncertainty in topography prediction (cross section)  ")
+		plt.xlabel(' Distance in kilometers  ')
+		plt.ylabel(' Height in meters')
+		
+		plt.savefig(self.filename+'/x_ymid_opt.png') 
+		plt.clf()
+
+		plt.plot(x_, y_xmid_real, label='ground truth') 
+		plt.plot(x_, y_xmid_5th, label='pred.(5th percen.)')
+		plt.plot(x_, y_xmid_95th, label='pred.(95th percen.)')
+		plt.plot(x_, y_xmid_mean, label='pred. (mean)') 
+		plt.xlabel(' Distance in kilometers ')
+		plt.ylabel(' Height in meters')
+		
+		plt.fill_between(x_, y_xmid_5th , y_xmid_95th, facecolor='g', alpha=0.4)
+		plt.legend(loc='upper right')
+
+		plt.title("Uncertainty in topography prediction  (cross section)  ")
+		plt.savefig(self.filename+'/y_xmid_opt.png') 
+		plt.clf()
 
 	def storeParams(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erdp, pos_tau_erdp_pts, pos_likl): 
 		"""
@@ -333,64 +408,67 @@ class bayeslands_mcmc():
 		pos_likl = str(pos_likl)
 		if not os.path.isfile(('%s/exp_data.txt' % (self.filename))):
 			with file(('%s/exp_data.txt' % (self.filename)),'w') as outfile:
-				# outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_rain)
-				outfile.write('\t')
-				outfile.write(pos_erod)
-				outfile.write('\t')
-				outfile.write(pos_likl)
-				outfile.write('\t')
-				outfile.write(pos_m)
-				outfile.write('\t')
-				outfile.write(pos_n)
-				outfile.write('\t')
-				outfile.write(pos_tau_elev)
-				outfile.write('\t')
-				outfile.write(pos_tau_erdp)
-				outfile.write('\t')
-				outfile.write(pos_tau_erdp_pts)
-				outfile.write('\n')
+				outfile.write('{0} '.format(pos_rain))
+				outfile.write('{0} '.format(pos_erod))
+				outfile.write('{0} \n'.format(pos_likl))
 
 		else:
 			with file(('%s/exp_data.txt' % (self.filename)),'a') as outfile:
-				# outfile.write('\n# {0}\t'.format(naccept))
-				outfile.write(pos_rain)
-				outfile.write('\t')
-				outfile.write(pos_erod)
-				outfile.write('\t')
-				outfile.write(pos_likl)
-				outfile.write('\t')
-				outfile.write(pos_m)
-				outfile.write('\t')
-				outfile.write(pos_n)
-				outfile.write('\t')
-				outfile.write(pos_tau_elev)
-				outfile.write('\t')
-				outfile.write(pos_tau_erdp)
-				outfile.write('\t')
-				outfile.write(pos_tau_erdp_pts)
-				outfile.write('\n')
+				outfile.write('{0} '.format(pos_rain))
+				outfile.write('{0} '.format(pos_erod))
+				outfile.write('{0} \n'.format(pos_likl))
 
 	def likelihoodFunc(self,input_vector, real_elev, real_erdp, real_erdp_pts, tausq_elev, tausq_erdp, tausq_erdp_pts):
 		"""
 		
 		"""
 
+		# pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec = self.blackBox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
+
+		# tausq_elev = (np.sum(np.square(pred_elev_vec[self.simtime] - real_elev)))/real_elev.size
+
+		# tausq_erdp_pts = (np.sum(np.square(pred_erdp_pts_vec[self.simtime] - real_erdp_pts)))/real_erdp_pts.size
+		
+		# likelihood_elev = -0.5 * np.log(2* math.pi * tausq_elev) - 0.5 * np.square(pred_elev_vec[self.simtime] - real_elev) / tausq_elev
+		
+		# if self.likl_sed:
+		# 	#likelihood_erdp  = -0.5 * np.log(2* math.pi * tausq_erdp) - 0.5 * np.square(pred_erdp_vec[self.simtime] - real_erdp) / tausq_erdp		
+		# 	likelihood_erdp_pts = -0.5 * np.log(2* math.pi * tausq_erdp_pts) - 0.5 * np.square(pred_erdp_pts_vec[self.simtime] - real_erdp_pts) / tausq_erdp_pts
+		# 	likelihood = np.sum(likelihood_elev) + np.sum(likelihood_erdp_pts)
+
+		# else:
+		# 	likelihood = np.sum(likelihood_elev)
+
+		# return [likelihood, pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec]
+
 		pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec = self.blackBox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
 
 		tausq_elev = (np.sum(np.square(pred_elev_vec[self.simtime] - real_elev)))/real_elev.size
+		sq_error_elev = (np.sum(np.square(pred_elev_vec[self.simtime] - real_elev)))/real_elev.size
 
-		tausq_erdp_pts = (np.sum(np.square(pred_erdp_pts_vec[self.simtime] - real_erdp_pts)))/real_erdp_pts.size
+		tausq_erdp_pts = np.zeros(self.sim_interval.size)
+		for i in range(self.sim_interval.size):
+			tausq_erdp_pts[i] = np.sum(np.square(pred_erdp_pts_vec[self.sim_interval[i]] - self.real_erdp_pts[i]))/real_erdp_pts.shape[1]
 		
+		# print 'tausq_erdp_pts' , tausq_erdp_pts
+
 		likelihood_elev = -0.5 * np.log(2* math.pi * tausq_elev) - 0.5 * np.square(pred_elev_vec[self.simtime] - real_elev) / tausq_elev
-		
+		likelihood_erdp_pts = 0
+
 		if self.likl_sed:
 			#likelihood_erdp  = -0.5 * np.log(2* math.pi * tausq_erdp) - 0.5 * np.square(pred_erdp_vec[self.simtime] - real_erdp) / tausq_erdp		
-			likelihood_erdp_pts = -0.5 * np.log(2* math.pi * tausq_erdp_pts) - 0.5 * np.square(pred_erdp_pts_vec[self.simtime] - real_erdp_pts) / tausq_erdp_pts
-			likelihood = np.sum(likelihood_elev) + np.sum(likelihood_erdp_pts)
+			for i in range(1,self.sim_interval.size):
+				likelihood_erdp_pts += np.sum(-0.5 * np.log(2* math.pi * tausq_erdp_pts[i]) - 0.5 * np.square(pred_erdp_pts_vec[self.sim_interval[i]] - self.real_erdp_pts[i]) / tausq_erdp_pts[i])
+			
+			likelihood = np.sum(likelihood_elev) + (likelihood_erdp_pts*50)
 
+			sq_error_erdp_pts = np.sum(np.square(pred_erdp_pts_vec[self.sim_interval[i]] - self.real_erdp_pts[i]))/real_erdp_pts.shape[1]
+			sq_error = sq_error_elev+ sq_error_erdp_pts
+			print 'Using sediment pts in the likelihood'
+		
 		else:
 			likelihood = np.sum(likelihood_elev)
+			sq_error = sq_error_elev
 
 		return [likelihood, pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec]
 
@@ -407,9 +485,9 @@ class bayeslands_mcmc():
 		real_erdp_pts = self.real_erdp_pts
 
 		# UPDATE PARAMS AS PER EXPERIMENT
-		self.viewGrid('real elev', 0 , 1.5, 5.e-5, zData=real_elev, title='Real Elevation')
-		self.viewMap('real erdp', 0 , 1.5, 5.e-5,  zData=real_erdp, title='Real erdp')
-		self.viewBar('real erdp_pts', 0 , 1.5, 5.e-5, xData = self.erdp_coords, yData=real_erdp_pts, title='Real erdp pts')
+		# self.viewGrid('real elev', 0 , 1.5, 5.e-5, zData=real_elev, title='Real Elevation')
+		# self.viewMap('real erdp', 0 , 1.5, 5.e-5,  zData=real_erdp, title='Real erdp')
+		# self.viewBar('real erdp_pts', 0 , 1.5, 5.e-5, xData = self.erdp_coords, yData=real_erdp_pts, title='Real erdp pts')
 		
 		# Creating storage for data
 		pos_erod = np.zeros(samples)
@@ -417,6 +495,12 @@ class bayeslands_mcmc():
 		pos_m = np.zeros(samples)
 		pos_n = np.zeros(samples)
 		
+
+		list_yslicepred = np.zeros((samples,self.real_elev.shape[0]))  # slice taken at mid of topography along y axis  
+		list_xslicepred = np.zeros((samples,self.real_elev.shape[1])) # slice taken at mid of topography along x axis  
+		ymid = int(self.real_elev.shape[1]/2 ) #   cut the slice in the middle 
+		xmid = int(self.real_elev.shape[0]/2)
+
 		# List of accepted samples
 		count_list = []
 
@@ -535,22 +619,7 @@ class bayeslands_mcmc():
 
 			# p_erod = erod
 
-			# # Updating m parameter and checking limits
-			# p_m = m + np.random.normal(0,self.step_m)
-			# if p_m < self.rainlimits[0]:
-			# 	p_m = m
-			# elif p_m > self.rainlimits[1]:
-			# 	p_m = m
-
 			p_m = m
-
-			# # Updating n parameter and checking limits
-			# p_n = n + np.random.normal(0,self.step_n)
-			# if p_n < self.rainlimits[0]:
-			# 	p_n = n
-			# elif p_n > self.rainlimits[1]:
-			# 	p_n = n
-
 			p_n = n
 
 			# Creating storage for parameters to be passed to blockBox model
@@ -573,6 +642,8 @@ class bayeslands_mcmc():
 
 			# Passing paramters to calculate likelihood and rmse with new tau
 			[likelihood_proposal, pred_elev, pred_erdp, pred_erdp_pts] = self.likelihoodFunc(v_proposal, real_elev, real_erdp, real_erdp_pts, tau_elev_pro, tau_erdp_pro, tau_erdp_pts_pro)
+
+			final_predtopo = pred_elev[self.simtime]
 
 			# Difference in likelihood from previous accepted proposal
 			diff_likelihood = likelihood_proposal - likelihood
@@ -606,7 +677,10 @@ class bayeslands_mcmc():
 				pos_tau_elev[i + 1,] = tau_elev_pro
 				pos_tau_erdp[i + 1,] = tau_erdp_pro
 				pos_tau_erdp_pts[i + 1,] = tau_erdp_pts_pro
-				#pos_rmse[i + 1,] = rmse
+
+				list_yslicepred[i+1,:] =  final_predtopo[:, ymid] # slice taken at mid of topography along y axis  
+				list_xslicepred[i+1,:]=   final_predtopo[xmid, :]  # slice taken at mid of topography along x axis 
+
 				pos_likl[i + 1,] = likelihood
 				
 				self.storeParams(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_tau_elev[i+1,], pos_tau_erdp[i+1,] , pos_tau_erdp_pts[i+1,], pos_likl[i+1,])
@@ -637,6 +711,9 @@ class bayeslands_mcmc():
 				pos_tau_erdp[i + 1,] = pos_tau_erdp[i,]
 				pos_tau_erdp_pts[i + 1,] = pos_tau_erdp_pts[i,]
 				pos_likl[i + 1,] = pos_likl[i,]
+				
+				list_yslicepred[i+1,:] =  list_yslicepred[i,:] 
+				list_xslicepred[i+1,:]=   list_xslicepred[i,:]
 				
 				self.storeParams(i, pos_rain[i + 1], pos_erod[i + 1], pos_m[i+1], pos_n[i+1], pos_tau_elev[i+1,], pos_tau_erdp[i+1,] , pos_tau_erdp_pts[i+1,], pos_likl[i+1,]) #Save last accepted parameters in accept file # pos_rmse[i+1,],
 				
@@ -681,21 +758,25 @@ class bayeslands_mcmc():
 		end = time.time()
 		total_time = end - start
 		total_time_mins = total_time/60
-		print 'Time elapsed: (s)', total_time
-
 		accepted_count =  len(count_list)
-		print accepted_count, ' number accepted'
 		print (count_list)
-		print len(count_list) / (samples * 0.01), '% was accepted'
 		accept_ratio = accepted_count / (samples * 1.0) * 100
+		
+		print 'Time elapsed: (s)', total_time
+		print accepted_count, ' number accepted'
+		print len(count_list) / (samples * 0.01), '% was accepted'
 		print 'Results are stored in ', self.filename
 		
 		with file(('%s/experiment_stats.txt' % (self.filename)),'w') as outres:
 			outres.write('MSEelev: {0}\nMSEerdp: {1}\nMSEerdp_pts: {2}\nTime:(s) {3}\nTime:(mins) {4}\n'.format(mse_elev,mse_erdp,mse_erdp_pts,total_time,total_time_mins))
 			outres.write('Accept ratio: {0} %\nSamples accepted : {1} out of {2}\n Count List : {3} '.format(accept_ratio, accepted_count, self.samples, count_list))
-		
+			outres.write('Time Elapsed: (s) {0} , (mins): {1}'.format(total_time, total_time_mins))
+		np.savetxt('%s/prediction_data/pred_xslc.txt' % (self.filename), list_xslicepred )
+		np.savetxt('%s/prediction_data/pred_yslc.txt' % (self.filename), list_yslicepred )
+
+		self.viewCrossSection(list_xslicepred.T, list_yslicepred.T)
 		return
-	
+
 def main():
 	"""
 		
@@ -705,39 +786,15 @@ def main():
 	run_nb = 0
 	directory = ""
 	likl_sed = False
-	erdp_coords_crater = np.array([ [60,60], [72,66], [85,73], [90,75] ])
-	erdp_coords_etopo = np.array([ [10,60], [30,30], [60,10], [80,75] ])
+	erdp_coords_crater = np.array([[60,60],[52,67],[74,76],[62,45],[72,66],[85,73],[90,75],[44,86],[100,80],[88,69]])
+	erdp_coords_crater_fast = np.array([[60,60],[72,66],[85,73],[90,75],[44,86],[100,80],[88,69],[79,91],[96,77],[42,49]])
+	erdp_coords_etopo = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[72,73],[46,64]])
+	erdp_coords_etopo_fast = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[68,40],[72,44]])
 
 	choice = input("Please choose a Badlands example to run the MCMC algorithm on:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
 	samples = input("Please enter number of samples : ")
 
-	if choice == 0:
-		directory = 'Examples/crater_'
-		xmlinput = '%s/crater.xml' %(directory)
-		simtime = 15000
-		rainlimits = [0.0, 3.0]
-		erodlimits = [3.e-5, 7.e-5]
-		mlimit = [0.4, 0.6]
-		nlimit = [0.9, 1.1]
-		true_rain = 1.5
-		true_erod = 5.e-5
-		likl_sed = True
-		erdp_coords = erdp_coords_crater
-
-	elif choice == 6:
-		directory = 'Examples/etopo_'
-		xmlinput = '%s/etopo.xml' %(directory)
-		simtime = 500000
-		rainlimits = [0.0, 3.0]
-		erodlimits = [3.e-6, 7.e-6]
-		mlimit = [0.4, 0.6]
-		nlimit = [0.9, 1.1]
-		true_rain = 1.5
-		true_erod = 5.e-6
-		likl_sed = True
-		erdp_coords = erdp_coords_etopo
-
-	elif choice == 1:
+	if choice == 1:
 		directory = 'Examples/crater_fast'
 		xmlinput = '%s/crater.xml' %(directory)
 		simtime = 15000
@@ -748,7 +805,7 @@ def main():
 		true_rain = 1.5
 		true_erod = 5.e-5
 		likl_sed = True
-		erdp_coords = erdp_coords_crater
+		erdp_coords = erdp_coords_crater_fast
 
 	elif choice == 2:
 		directory = 'Examples/crater'
@@ -774,12 +831,12 @@ def main():
 		true_rain = 1.5
 		true_erod = 5.e-6
 		likl_sed = True
-		erdp_coords = erdp_coords_etopo
+		erdp_coords = erdp_coords_etopo_fast
 
 	elif choice == 4:
 		directory = 'Examples/etopo'
 		xmlinput = '%s/etopo.xml' %(directory)
-		simtime = 500000
+		simtime = 1000000
 		rainlimits = [0.0, 3.0]
 		erodlimits = [3.e-6, 7.e-6]
 		mlimit = [0.4, 0.6]

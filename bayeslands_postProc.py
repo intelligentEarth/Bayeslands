@@ -38,23 +38,23 @@ from plotly.graph_objs import *
 from plotly.offline.offline import _plot_html
 plotly.offline.init_notebook_mode()
 
-def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_tau_elev, pos_tau_erdp, pos_tau_erdppts, bins, rain_true_val, erod_true_val):
+def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	
 	burnin = 0.05 * len(pos_likl)  # use post burn in samples
-	pos_tau_elev = pos_tau_elev[int(burnin):, ]
-	pos_tau_erdp = pos_tau_erdp[int(burnin):, ]
-	pos_tau_erdp_pts = pos_tau_erdp_pts[int(burnin):, ]
 	pos_likl = pos_likl[int(burnin):,]
 	pos_erod = pos_erod[int(burnin):]
 	pos_rain = pos_rain[int(burnin):]
-	pos_m = pos_m[int(burnin):]
-	pos_n = pos_n[int(burnin):]
 
 	nb_bins= bins
 	slen = np.arange(0,len(pos_likl),1)
 	font = 9
 	width = 1
 
+	rain_true_val = np.asarray(t_val[0], dtype = float)
+	erod_true_val = np.asarray(t_val[1], dtype = float)
+	print 'r_t ', rain_true_val
+	print 'e_t ', erod_true_val 
+	color = ['brown','blue','magenta','red','purple','darkorange','deepskyblue','mediumslateblue','limegreen','black']
 	######################################     RAIN      ################################
 
 	rainmin, rainmax = min(pos_rain), max(pos_rain)
@@ -77,22 +77,19 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_tau_elev, pos_tau_erd
 	# ax1.set_axis_bgcolor("white")
 	n, rainbins, patches = ax1.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)	
 	
-	ax1.axvline(rain_true_val)
-
-	# for val in rain_true_val:
-	# 	ax1.axvline(val)
+	for count, v in enumerate(rain_true_val):
+			ax1.axvline(x=v, color='%s' %(color[count]), linestyle='dashed', linewidth=1) # comment when go real value is 
 
 	ax1.grid(True)
 	ax1.set_ylabel('Frequency',size= font+1)
-	ax1.set_xlabel('rain', size= font+1)
+	ax1.set_xlabel('Rain', size= font+1)
 	
 	ax2 = fig.add_subplot(212)
 	ax2.set_facecolor('#f2f2f3')
-	# ax2.set_axis_bgcolor("white")
 	ax2.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
-	ax2.set_title(r'Trace of Rain',size= font+2)
+	ax2.set_title('Trace of Rain',size= font+2)
 	ax2.set_xlabel('Samples',size= font+1)
-	ax2.set_ylabel('rain', size= font+1)
+	ax2.set_ylabel('Rain', size= font+1)
 	ax2.set_xlim([0,np.amax(slen)])
 
 	fig.tight_layout()
@@ -123,24 +120,20 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_tau_elev, pos_tau_erd
 	ax1.set_facecolor('#f2f2f3')
 	# ax1.set_axis_bgcolor("white")
 	n, erodbins, patches = ax1.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
-	
-	# for val in erod_true_val:
-	# 	ax1.axvline(val)
 
-	ax1.axvline(erod_true_val)
+	for count, v in enumerate(erod_true_val):
+			ax1.axvline(x=v, color='%s' %(color[count]), linestyle='dashed', linewidth=1) # comment when go real value is 
 
 	ax1.grid(True)
 	ax1.set_ylabel('Frequency',size= font+1)
-	ax1.set_xlabel('erod', size= font+1)
+	ax1.set_xlabel('Erodibility', size= font+1)
 	
 	ax2 = fig.add_subplot(212)
 	ax2.set_facecolor('#f2f2f3')
-	# ax2.set_axis_bgcolor("white")
-
 	ax2.plot(slen,pos_erod,linestyle='-', linewidth= width, color='k', label=None)
-	ax2.set_title(r'Trace of $\varepsilon$',size= font+2)
+	ax2.set_title('Trace of Erodibility',size= font+2)
 	ax2.set_xlabel('Samples',size= font+1)
-	ax2.set_ylabel('erod', size= font+1)
+	ax2.set_ylabel('Erodibility', size= font+1)
 	ax2.set_xlim([0,np.amax(slen)])
 	fig.tight_layout()
 	fig.subplots_adjust(top=0.88)
@@ -159,35 +152,20 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_tau_elev, pos_tau_erd
 	ax.spines['bottom'].set_color('none')
 	ax.spines['left'].set_color('none')
 	ax.spines['right'].set_color('none')
-	ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
-		
+	ax.tick_params(labelcolor='w', top='off', bottom='off', left = 'off', right='off')
+	
 	ax1 = fig.add_subplot(211)
 	ax1.set_facecolor('#f2f2f3')
-	# ax1.set_axis_bgcolor("white")
 	ax1.plot(slen,pos_likl,linestyle='-', linewidth= width, color='k', label=None)
-	ax1.set_title(r'Trace of Likelihood',size= font+2)
+	ax1.set_title('Trace of Likelihood',size= font+2)
 	ax1.set_xlabel('Samples',size= font+1)
-	ax1.set_ylabel(r'Likelihood', size= font+1)
+	ax1.set_ylabel('Log likelihood', size= font+1, labelpad = 10)
 	ax1.set_xlim([0,np.amax(slen)])
+	ax1.yaxis.set_major_formatter(mpl.ticker.StrMethodFormatter('{x:,.0f}'))
 	
-	tau_elevmin, tau_elevmax = min(pos_tau_elev), max(pos_tau_elev)
-	tau_elevspace = np.linspace(tau_elevmin,tau_elevmax,len(pos_tau_elev))
-	tau_elevm,tau_elevs = stats.norm.fit(pos_tau_elev)
-	pdf_tau_elev = stats.norm.pdf(tau_elevspace,tau_elevm,tau_elevs)
-	tau_elevmean=np.mean(pos_tau_elev)
-	tau_elevmedian=np.median(pos_tau_elev)
-
-	ax2 = fig.add_subplot(212)
-	ax2.set_facecolor('#f2f2f3')
-	# ax2.set_axis_bgcolor("white")
-	ax2.plot(slen,pos_tau_elev,linestyle='-', linewidth= width, color='k', label=None)
-	ax2.set_title(r'Trace of Tau sq',size= font+2)
-	ax2.set_xlabel('Samples',size= font+1)
-	ax2.set_ylabel(r'tau_elevq', size= font+1)
-	ax2.set_xlim([0,np.amax(slen)])
 	fig.tight_layout()
 	fig.subplots_adjust(top=0.88)
-	plt.savefig('%slik_tau.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
+	plt.savefig('%slikl.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
 	plt.clf()
 
 	####################################      Joint    ################################
@@ -200,7 +178,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_tau_elev, pos_tau_erd
 	ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
 	ax.set_title(' Rain Parameter', fontsize=  font+2)#, y=1.02)
 	
-	ax1 = fig.add_subplot(211, projection = '3d')
+	ax1 = fig.add_subplot(212, projection = '3d')
 	ax1.set_facecolor('#f2f2f3')
 	# ax1.set_axis_bgcolor("white")
 	hist, rainedges, erodedges = np.histogram2d(pos_rain, pos_erod, bins = 15 , range = [[rainmin, rainmax],[erodmin, erodmax]])
@@ -231,64 +209,64 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, pos_tau_elev, pos_tau_erd
 
 	# ####################################      Ratio      ####################################
 	
-	fig = plt.figure(figsize=(8,10))
+	# fig = plt.figure(figsize=(8,10))
+	# ax = fig.add_subplot(111)
+	# ax.spines['top'].set_color('none')
+	# ax.spines['bottom'].set_color('none')
+	# ax.spines['left'].set_color('none')
+	# ax.spines['right'].set_color('none')
+	# ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+
+	# ax1 = fig.add_subplot(211)
+	# ratio = pos_rain/pos_erod
+	# ax1.plot(ratio, pos_likl)
+	# plt.savefig('%sratio.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
+	# ax1.set_title(r'Ratio',size= font+2)
+	# ax1.set_xlabel('Ratio',size= font+1)
+	# ax1.set_ylabel(r'Likelihood', size= font+1)
+	# # ax1.set_xlim([0,np.amax(ratio)])
+	# fig.tight_layout()
+	# fig.subplots_adjust(top=0.88)
+	# plt.savefig('%sratio.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
+	# plt.clf()
+
+def plotLiklSurf(fname, pos_likl, pos_rain, pos_erod):
+	font = 9
+	width = 1
+
+	fig = plt.figure(figsize=(15,15))
 	ax = fig.add_subplot(111)
 	ax.spines['top'].set_color('none')
 	ax.spines['bottom'].set_color('none')
 	ax.spines['left'].set_color('none')
 	ax.spines['right'].set_color('none')
 	ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+	ax.set_title(' Likelihood', fontsize=  font+2)#, y=1.02)
+	
+	ax1 = fig.add_subplot(211, projection = '3d')
+	ax1.set_facecolor('#f2f2f3')
+	X = pos_rain
+	Y = pos_erod
 
-	ax1 = fig.add_subplot(211)
-	ratio = pos_rain/pos_erod
-	ax1.plot(ratio, pos_likl)
-	plt.savefig('%sratio.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
-	ax1.set_title(r'Ratio',size= font+2)
-	ax1.set_xlabel('Ratio',size= font+1)
-	ax1.set_ylabel(r'Likelihood', size= font+1)
-	ax1.set_xlim([0,np.amax(ratio)])
-	fig.tight_layout()
-	fig.subplots_adjust(top=0.88)
-	plt.savefig('%sratio.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
-	plt.clf()
+	R = X/Y
 
-def plotLiklSurf(fname, pos_likl, pos_rain, pos_erod):
-		font = 9
-		width = 1
+	X, Y = np.meshgrid(X, Y)
+	Z = pos_likl
 
-		fig = plt.figure(figsize=(15,15))
-		ax = fig.add_subplot(111)
-		ax.spines['top'].set_color('none')
-		ax.spines['bottom'].set_color('none')
-		ax.spines['left'].set_color('none')
-		ax.spines['right'].set_color('none')
-		ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
-		ax.set_title(' Likelihood', fontsize=  font+2)#, y=1.02)
-		
-		ax1 = fig.add_subplot(211, projection = '3d')
-		ax1.set_facecolor('#f2f2f3')
-		X = pos_rain
-		Y = pos_erod
+	print 'X shape ', X.shape, 'Y shape ', Y.shape, 'Z shape ', Z.shape
 
-		R = X/Y
+	surf = ax1.plot_surface(X,Y,Z, cmap = cm.coolwarm, linewidth= 0, antialiased = False)
+	ax1.set_zlim(Z.min(), Z.max())
+	ax1.zaxis.set_major_locator(LinearLocator(10))
+	ax1.zaxis.set_major_formatter(FormatStrFormatter('%.05f'))
+	# Add a color bar which maps values to colors.
 
-		X, Y = np.meshgrid(X, Y)
-		Z = pos_likl
+	ax2 = fig.add_subplot(212)
+	
 
-		print 'X shape ', X.shape, 'Y shape ', Y.shape, 'Z shape ', Z.shape
-
-		surf = ax1.plot_surface(X,Y,Z, cmap = cm.coolwarm, linewidth= 0, antialiased = False)
-		ax1.set_zlim(Z.min(), Z.max())
-		ax1.zaxis.set_major_locator(LinearLocator(10))
-		ax1.zaxis.set_major_formatter(FormatStrFormatter('%.05f'))
-		# Add a color bar which maps values to colors.
-
-		ax2 = fig.add_subplot(212)
-		
-
-		fig.colorbar(surf, shrink=0.5, aspect=5)
-		plt.savefig('%s/plot.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
-		plt.show()
+	fig.colorbar(surf, shrink=0.5, aspect=5)
+	plt.savefig('%s/plot.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
+	plt.show()
 
 def covarMat (fname, pos_rain, pos_erod):
 	c = np.column_stack((rain_,erod_))
@@ -320,8 +298,6 @@ def main():
 		directory = 'Examples/crater_fast'
 		rain_true_val = 1.5
 		erod_true_val = 5.e-5
-		# rain_true_val = np.loadtxt("Examples/crater_fast/liklSurface_1/rain_t.csv")
-		# erod_true_val = np.loadtxt("Examples/crater_fast/liklSurface_1/erod_t.csv")
 	elif choice == 2:
 		directory = 'Examples/crater'
 		rain_true_val = 1.5
@@ -334,64 +310,42 @@ def main():
 		directory = 'Examples/etopo'
 		rain_true_val = 1.5
 		erod_true_val = 5.e-6
-	# elif choice == 5:
-	# 	directory = 'Examples/delta'
-	# 	rain_true_val = 1.5
-	# 	erod_true_val = 5.e-5
+
 
 	run_nb = input('Please enter the folder number for Experiment i.e. mcmcresults_% ')
-
 	fname = '%s/mcmcresults_%s/' % (directory,run_nb)
-	
+	exp_data = '%s/mcmcresults_%s/exp_data.txt' % (directory,run_nb)
 	filename_list = []
-	filename_list.append('%s/mcmcresults_%s/accept_likl.txt' % (directory,run_nb))
-	filename_list.append('%s/mcmcresults_%s/accept_rain.txt' % (directory,run_nb))
-	filename_list.append('%s/mcmcresults_%s/accept_erod.txt' % (directory,run_nb))
-	filename_list.append('%s/mcmcresults_%s/accept_tau_elev.txt' % (directory,run_nb))
-	filename_list.append('%s/mcmcresults_%s/accept_tau_erdp.txt' % (directory,run_nb))
-	filename_list.append('%s/mcmcresults_%s/accept_tau_erdp_pts.txt' % (directory,run_nb))
-
-	likl = []
+	filename_list.append(exp_data)
+	
 	rain = []
 	erod = []
-	tau_elev =[] 
-	tau_erdp = []
-	tau_erdppts = []
+	likl = []
 
 	for list_name in filename_list:
 		with open(list_name) as f:
-			next(f)
-			next(f)
-			for line in f:
-				words = line.split()
-				error = words[2]
-				lname =  list_name[-8:-4]
-				if lname == 'likl':
-					likl.append(error)
-				elif lname == 'rain':
-					rain.append(error)
-				elif lname == 'erod':
-					erod.append(error)
-				elif lname == 'elev':
-					tau_elev.append(error)
-				elif lname == 'erdp':
-					tau_erdp.append(error)	
-				elif lname == '_pts':
-					tau_erdppts.append(error)	
+			for count, line in enumerate(f):
+				# print count,' ', line
+				term = line.split()
+				# print 'term', term
+				rain.append(term[0])
+				# print 'rain', rain
+				erod.append(term[1])
+				# print 'erod', erod
+				likl.append(term[2])
+				# print 'likl', likl
 
 	print 'length of likl', len(likl), ' rain', len(rain), ' erod', len(erod)
 
-	likl_ = np.asarray(likl, dtype = float)
 	rain_ = np.asarray(rain, dtype = float)
 	erod_ = np.asarray(erod, dtype = float)
-	tau_elev_ = np.asarray(tau_elev, dtype = float)
-	tau_erdp_ = np.asarray(tau_erdp, dtype = float)
-	tau_erdp_pts_ = np.asarray(tau_erdppts, dtype = float)
+	likl_ = np.asarray(likl, dtype = float)
 
+	t_val_ = np.loadtxt('%s/data/true_values.txt' % (directory))
 
 	if functionality == 1:
 		bins= input("Please enter Bin Size for Histogram (e.g. 10, 20 ,30 ...")
-		plotFunctions(fname, likl_, rain_, erod_, tau_elev_, tau_erdp_, tau_erdp_pts_, bins, rain_true_val, erod_true_val)
+		plotFunctions(fname, likl_, rain_, erod_, bins, t_val_)
 		# plotFunctions(fname, likl_, rain_, erod_, bins, rain_true_val, erod_true_val)
 		print '\nFinished plotting'
 

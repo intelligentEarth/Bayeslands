@@ -19,7 +19,7 @@
         <!-- Simulation start time [a] -->
         <start>0.</start>
         <!-- Simulation end time [a] -->
-        <end>150000.</end>
+        <end>50000.</end>
         <!-- Display interval [a] -->
         <display>5000.</display>
     </time>
@@ -37,7 +37,7 @@
             <!-- Rain start time [a] -->
             <rstart>0.</rstart>
             <!-- Rain end time [a] -->
-            <rend>150000.</rend>
+            <rend>50000.</rend>
             <!-- Precipitation value [m/a] - (optional) -->
             <rval>1.1</rval>
         </rain>

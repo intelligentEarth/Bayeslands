@@ -17,7 +17,7 @@
         <!-- Simulation start time [a] -->
         <start>0.</start>
         <!-- Simulation end time [a] -->
-        <end>500000.</end>
+        <end>1000000.</end>
         <!-- Display interval [a] -->
         <display>10000.</display>
     </time>

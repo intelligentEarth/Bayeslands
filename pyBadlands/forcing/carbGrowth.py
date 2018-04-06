@@ -21,7 +21,7 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy import interpolate
 from scipy.spatial import cKDTree
 from collections import OrderedDict
-from matplotlib import _cntr as cntr
+from matplotlib import contour as cntr
 
 class carbGrowth:
     """

@@ -1,0 +1,16 @@
+
+\samples: 2500
+	erod_limits: [3e-06, 7e-06]
+	rain_limits: [0.0, 3.0]
+	erdp coords: [[42 10]
+ [39  8]
+ [75 51]
+ [59 13]
+ [40  5]
+ [ 6 20]
+ [14 66]
+ [ 4 40]
+ [72 73]
+ [46 64]]
+	likl_sed: True
+	filename: Examples/etopo/liklSurface_13

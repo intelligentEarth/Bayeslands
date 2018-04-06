@@ -1,0 +1,16 @@
+
+\samples: 2500
+	erod_limits: [3e-05, 7e-05]
+	rain_limits: [0.0, 3.0]
+	erdp coords: [[ 60  60]
+ [ 52  67]
+ [ 74  76]
+ [ 62  45]
+ [ 72  66]
+ [ 85  73]
+ [ 90  75]
+ [ 44  86]
+ [100  80]
+ [ 88  69]]
+	likl_sed: True
+	filename: Examples/crater/liklSurface_2

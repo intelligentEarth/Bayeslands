@@ -409,19 +409,33 @@ def main():
 	directory = ""
 	likl_sed = False
 	
-	erdp_coords_crater = np.array([ [2,3], [3,2], [5,5] ])
-	erdp_coords_etopo = np.array([ [10,60], [30,30], [60,10], [80,75] ])
-	
+	erdp_coords_crater = np.array([[60,60],[72,66],[85,73],[90,75],[44,86],[100,80],[88,69],[79,91],[96,77],[42,49]])
+	erdp_coords_crater_fast = np.array([[60,60],[72,66],[85,73],[90,75],[44,86],[100,80],[88,69],[79,91],[96,77],[42,49]])
+	erdp_coords_etopo = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[72,73],[46,64]])
+	erdp_coords_etopo_fast = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[68,40],[72,44]])
+
 	choice = input("Please choose a Badlands example to run the likelihood surface generator on:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
 	samples = input("Please enter number of samples (Make sure it is a perfect square): ")
 
 	if choice == 1:
-		directory = 'Examples/crater_fast_3030'
+		directory = 'Examples/crater_fast'
 		xmlinput = '%s/crater.xml' %(directory)
 		simtime = 15000
-		rainlimits = [1.0, 2.0]
-		# rainlimits = [1.495, 1.505]
-		erodlimits = [4.e-5, 6.e-5]
+		rainlimits = [0.0, 3.0]
+		erodlimits = [3.e-5, 7.e-5]
+		mlimit = [0.4, 0.6]
+		nlimit = [0.9, 1.1]
+		true_rain = 1.5
+		true_erod = 5.e-5
+		likl_sed = False
+		erdp_coords = erdp_coords_crater_fast
+
+	elif choice == 2:
+		directory = 'Examples/crater'
+		xmlinput = '%s/crater.xml' %(directory)
+		simtime = 50000
+		rainlimits = [0.0, 3.0]
+		erodlimits = [3.e-5, 7.e-5]
 		mlimit = [0.4, 0.6]
 		nlimit = [0.9, 1.1]
 		true_rain = 1.5
@@ -429,43 +443,30 @@ def main():
 		likl_sed = False
 		erdp_coords = erdp_coords_crater
 
-	elif choice == 2:
-		directory = 'Examples/crater'
-		xmlinput = '%s/crater.xml' %(directory)
-		simtime = 50000
-		rainlimits = [0.5, 3.0]
-		erodlimits = [1.e-5, 9.e-5]
-		mlimit = [0.4, 0.6]
-		nlimit = [0.9, 1.1]
-		true_rain = 1.5
-		true_erod = 5.e-5
-		likl_sed = True
-		erdp_coords = erdp_coords_crater
-
 	elif choice == 3:
 		directory = 'Examples/etopo_fast'
 		xmlinput = '%s/etopo.xml' %(directory)
 		simtime = 500000
-		rainlimits = [0.5, 3.0]
+		rainlimits = [0.0, 3.0]
 		erodlimits = [3.e-6, 7.e-6]
 		mlimit = [0.4, 0.6]
 		nlimit = [0.9, 1.1]
 		true_rain = 1.5
 		true_erod = 5.e-6
-		likl_sed = True
-		erdp_coords = erdp_coords_etopo
+		likl_sed = False
+		erdp_coords = erdp_coords_etopo_fast
 
 	elif choice == 4:
 		directory = 'Examples/etopo'
 		xmlinput = '%s/etopo.xml' %(directory)
-		simtime = 500000
-		rainlimits = [0.5, 3.0]
+		simtime = 1000000
+		rainlimits = [0.0, 3.0]
 		erodlimits = [3.e-6, 7.e-6]
 		mlimit = [0.4, 0.6]
 		nlimit = [0.9, 1.1]
 		true_rain = 1.5
 		true_erod = 5.e-6
-		likl_sed = True
+		likl_sed = False
 		erdp_coords = erdp_coords_etopo
 
 	else:
@@ -479,8 +480,6 @@ def main():
 		run_nb+=1
 	if not os.path.exists('%s/liklSurface_%s' % (directory,run_nb)):
 		os.makedirs('%s/liklSurface_%s' % (directory,run_nb))
-		# os.makedirs('%s/liklSurface_%s/plots' % (directory,run_nb))
-		# os.makedirs('%s/liklSurface_%s/prediction_data' % (directory,run_nb))
 		filename = ('%s/liklSurface_%s' % (directory,run_nb))
 
 	print '\nInput file shape', final_elev.shape, '\n'
