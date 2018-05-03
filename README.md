@@ -30,20 +30,23 @@ Installation:
 + bl_topogenr - File used to generate the input and final-time topography used by the mcmc file. 
 
 ### Sample Output
+
+<div align="center">
+    <img width=400 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_basemap.png" alt="etopo basemap" title="Basemap for Continental-Margin Example"</img> 
+</div>
+<div align="center">
+   <img width=350 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_initial.png" alt="etopo initial" title="Initial topography for Continental-Margin Example"</img> 
+   <img width=350 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_final.png" alt="etopo final" title="LInitial topography for Continental-Margin Example"</img> 
+</div>
+
 <div align="center">
     <img width=400 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/likelihood_surface_crater.png" alt="likl surface crater" title="Likelihood surface for the Crater Example"</img>
 </div>
-
 <div align="center">
     <img width=350 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/rain_crater.png" alt="rain posterior" title="Posterior distribution and trace plot for the rain parameter"</img>
     <img width=350 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/erod_crater.png" alt="erod posterior" title="Posterior distribution and trace plot for the erodibility parameter"</img>
 </div>
 
-<div align="center">
-   <img width=300 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_basemap.png" alt="etopo basemap" title="Basemap for Continental-Margin Example"</img> 
-   <img width=300 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_initial.png" alt="etopo initial" title="Initial topography for Continental-Margin Example"</img> 
-   <img width=300 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_final.png" alt="etopo final" title="LInitial topography for Continental-Margin Example"</img> 
-</div>
 
 
 
