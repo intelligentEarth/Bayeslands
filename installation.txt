@@ -1,0 +1,37 @@
+Installation Instructions:
+
+To run this you must have python installed on your system. This particular repository is written in Python 2.7
+
+Step 0: Required packages
+
+* sudo apt-get install python python-numpy python-scipy python-setuptools python-matplotlib
+* sudo apt-get update -y
+* sudo apt-get install -y git python-pip python-dev libzmq3-dev pkg-config libfreetype6-dev libpng3 libopenmpi-dev openmpi-bin libhdf5-dev liblapack-dev llvm-3.6 libedit-dev gfortran
+* sudo pip install -U setuptools
+* sudo pip install -U pip # fixes AssertionError in Ubuntu pip
+* sudo pip install enum34 jupyter markupsafe zmq singledispatch backports_abc certifi jsonschema ipyparallel path.py matplotlib mpi4py==1.3.1 git+https://github.com/badlands-model/triangle pandas plotly
+* sudo apt-get install -y libnetcdf-dev python-mpltoolkits.basemap
+* sudo pip install Cython==0.20 h5py scipy numpy numba==0.23.1 netcdf4 colorlover cmocean scikit-fuzzy pyevtk
+* sudo pip install ez_setup
+* git clone https://github.com/awickert/gFlex
+  cd gFlex
+  sudo python setup.py install
+
+**
+
+Step 1: Clone BayesLands Repository
+	git clone https://github.com/badlands-model/BayesLands.git
+
+Step 2: Install BayesLands
+	sudo pip install -e BayesLands
+
+Step 3: Run Make File
+	cd BayesLands/pyBadlands/libUtils
+	sudo make
+
+Step 4: Set export Path in .bashrc file
+	cd -
+	nano .bashrc
+	add following two paths at the end of the file (replace 'your-local-path' with where the repo is installed):
+		1) export LD_LIBRARY_PATH="your-local-path/BayesLands/pyBadlands/libUtils:$LD_LIBR$"
+		2) export PYTHON_PATH="your-local-path/BayesLands/pyBadlands/libUtils:$PYTHON_PATH"
