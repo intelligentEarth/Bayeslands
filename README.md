@@ -2,7 +2,7 @@ BayesLands - An MCMC implementation of pyBadlands
 =====
     
 <div align="center">
-    <img width=1000 src="https://github.com/badlands-model/BayesLands/Examples/basin/images/elev_500kyr.png" alt="flowchart mcmc" title="Flowchart for MCMC scheme with Badlands"</img>
+    <img width=1000 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/mcmc_flowchart.png" alt="flowchart mcmc" title="Flowchart for MCMC scheme with Badlands"</img>
 </div>
 
 [![DOI](https://zenodo.org/badge/51286954.svg)](https://zenodo.org/badge/latestdoi/51286954)
@@ -11,12 +11,6 @@ BayesLands - An MCMC implementation of pyBadlands
 **BayesLands**, a Bayesian framework for [**Badlands**](https://github.com/badlands-model/pyBadlands) that fuses information obtained from complex forward models with observational data and prior knowledge. As a proof-of-concept, we consider a synthetic and real-world topography with two free  parameters, namely precipitation and erodibility, that we need to estimate through BayesLands. The results of the experiments shows that BayesLands yields a promising distribution of the  parameters. Moreover, the challenge in sampling due to multi-modality is presented through visualizing a likelihood surface that has a  range of suboptimal modes.
 
 [Badlands overview](https://prezi.com/5y1usorz8e8k/badlands-overview/?utm_campaign=share&utm_medium=copy) - Basin Genesis Hub presentation (2017)
-
-<div align="center">
-    <img width=500 src="https://github.com/badlands-model/BayesLands/Examples/basin/images/elev_500kyr.png" alt="sketch Badlands" title="sketch of Badlands range of models."</img>
-    <img width=500 src="https://github.com/badlands-model/BayesLands/Examples/basin/images/elev_500kyr.png" alt="sketch Badlands" title="sketch of Badlands range of models."</img>
-</div>
-
 
 ### Usage Instructions
 
@@ -34,6 +28,21 @@ Installation:
 + bl_surflikl - File used to generate the likelihood surface of the free parameters.
 
 + bl_topogenr - File used to generate the input and final-time topography used by the mcmc file. 
+
+### Sample Output
+<div align="center">
+    <img width=300 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/likelihood_surface_crater.png" alt="likl surface crater" title="Likelihood surface for the Crater Example"</img>
+    <img width=300 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/rain_crater.png" alt="rain posterior" title="Posterior distribution for the rain parameter"</img>
+    <img width=300 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/erod_crater.png" alt="erod posterior" title="Posterior distribution for the erodibility parameter"</img>
+</div>
+
+<div align="center">
+   <img width=500 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_basemap.png" alt="etopo basemap" title="Basemap for Continental-Margin Example"</img> 
+   <img width=500 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_initial.png" alt="etopo initial" title="Initial topography for Continental-Margin Example"</img> 
+   <img width=500 src="https://github.com/badlands-model/BayesLands/blob/master/doc/figures/etopo_final.png" alt="etopo final" title="LInitial topography for Continental-Margin Example"</img> 
+</div>
+
+
 
 ### Community driven
 
