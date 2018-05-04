@@ -6,8 +6,12 @@
 ##  located at the project root, or contact the authors.                             ##
 ##                                                                                   ##
 ##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+
+#Main Contributer: Danial Azam  Email: dazam92@gmail.com
+
 """
-This script is intended to implement 
+This script is intended to implement functionality to  generate the likelihood surface of the free parameters.
+
 """
 import os
 import numpy as np

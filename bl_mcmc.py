@@ -1,11 +1,14 @@
 ##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
 ##                                                                                   ##
-##  This file forms part of the BayesLands surface processes modelling companion.      ##
+##  This file forms part of the BayesLands surface processes modelling companion.    ##
 ##                                                                                   ##
 ##  For full license and copyright information, please refer to the LICENSE.md file  ##
 ##  located at the project root, or contact the authors.                             ##
 ##                                                                                   ##
 ##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+
+#Main Contributer: Danial Azam  Email: dazam92@gmail.com
+
 """
 This script is intended to implement an MCMC (Markov Chain Monte Carlo) Metropolis Hastings methodology to pyBadlands. 
 Badlands is used as a "black box" model for bayesian methods.
@@ -85,23 +88,26 @@ class bayeslands_mcmc():
 		The following forcing conditions can be used:
 			- different uniform rain (uniform meaning same precipitation value on the entire region)
 			- different uniform erodibility (uniform meaning same erodibility value on the entire region)
+		
 		Parameters
 		----------
-		variable : inputname
-			XML file defining the parameters used to run Badlands simulation.
 		variable: rain
 			Requested uniform precipitation value.
 		variable: erodibility
 			Requested uniform erodibility value.
-		variable: etime
-			Duration of the experiment.
-		Return
+		variable: m, n
+			Values of m and n indicate how the incision rate scales
+            with bed shear stress for constant value of sediment flux
+            and sediment transport capacity.
+		
+		Returns
 		------
-		The function returns 2D numpy arrays containing the following information:
-		variable: elev
+		variable: elev_vec
 			Elevation as a 2D numpy array (regularly spaced dataset with resolution equivalent to simulation one)
-		variable: erdp
+		variable: erdp_vec
 			Cumulative erosion/deposition accumulation as a 2D numpy array (regularly spaced as well)
+		variable: erdp_pts_vec
+			Cumulative erosion/deposition at particular co-ordinates on the grid stored in erdp_coords
 		"""
 		tstart = time.clock()
 		# Re-initialise badlands model
@@ -149,6 +155,21 @@ class bayeslands_mcmc():
 	def interpolateArray(self, coords=None, z=None, dz=None):
 		"""
 		Interpolate the irregular spaced dataset from badlands on a regular grid.
+		Parameters
+		----------
+		variable : coords
+			model grid coordinates
+		variable: z
+			elevation
+		variable: dz
+			cummulative difference in sediment
+		Return
+		------
+		The function returns 2D numpy arrays containing the following information:
+		variable: zreg
+			elevation on a regular grid
+		variable: dzreg
+			erodep on a regular grid
 		"""
 		x, y = np.hsplit(coords, 2)
 		dx = (x[1]-x[0])[0]
@@ -181,14 +202,14 @@ class bayeslands_mcmc():
 		dzreg = np.reshape(dzi,(ny,nx))
 		return zreg,dzreg
 
-	def viewMap(self,sample_num, likl, rain, erod, width = 600, height = 600, zmin = None, zmax = None, zData = None, title='Export Grid'):
+	def viewMap(self, sample_num, likl, rain, erod, width = 600, height = 600, zmin = None, zmax = None, zData = None, title='Export Grid'):
 		"""
 		Use Plotly library to visualise the Erosion Deposition Heatmap.
 		
 		Parameters
 		----------
-		variable : resolution
-			Required resolution for the model grid (in metres).
+		variable : likl, rain, erod
+			values of rain, erodibility and likelihood to display on the map
 		variable: width
 			Figure width.
 		variable: height
@@ -197,8 +218,6 @@ class bayeslands_mcmc():
 			Minimal elevation.
 		variable: zmax
 			Maximal elevation.
-		variable: height
-			Figure height.
 		variable: zData
 			Elevation data to plot.
 		variable: title
@@ -234,20 +253,14 @@ class bayeslands_mcmc():
 
 		Parameters
 		----------
-		variable : resolution
-			Required resolution for the model grid (in metres).
+		variable : likl, rain, erod
+			values of rain, erodibility and likelihood to display on the map
 		variable: width
 			Figure width.
 		variable: height
 			Figure height.
-		variable: zmin
-			Minimal elevation.
-		variable: zmax
-			Maximal elevation.
-		variable: height
-			Figure height.
-		variable: zData
-			Elevation data to plot.
+		variable: xData, yData
+			X, Y data to plot.
 		variable: title
 			Title of the graph.
 		"""
@@ -270,12 +283,12 @@ class bayeslands_mcmc():
 
 	def viewGrid(self, sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
 		"""
-		Use Plotly library to visualise the grid in 3D.
+		Use Plotly library to visualise the elevation grid in 3D.
 
 		Parameters
 		----------
-		variable : resolution
-		    Required resolution for the model grid (in metres).
+		variable : likl, rain, erod
+			values of rain, erodibility and likelihood to display on the map
 		variable: width
 		    Figure width.
 		variable: height
@@ -284,8 +297,6 @@ class bayeslands_mcmc():
 		    Minimal elevation.
 		variable: zmax
 		    Maximal elevation.
-		variable: height
-		    Figure height.
 		variable: zData
 		    Elevation data to plot.
 		variable: title
@@ -318,26 +329,25 @@ class bayeslands_mcmc():
 		return
 
 	def viewCrossSection(self, list_xslice, list_yslice):
-		# print 'list_xslice', list_xslice.shape
-		# print 'list_yslice', list_yslice.shape
+		"""
+		Function to visualise the prediction alongside the cross section of the topography/grid
+		
+		Parameters
+		----------
+		variable : list_xslice, list_yslice
+			cross section of elevation grid at x,y co-ordinate of the grid
+		"""
 
 		ymid = int(self.real_elev.shape[1]/2 ) #   cut the slice in the middle 
 		xmid = int(self.real_elev.shape[0]/2)
-		# print 'ymid',ymid
-		# print 'xmid', xmid
-		# print(self.real_elev)
-		# print(self.real_elev.shape, ' shape')
+
 		x_ymid_real = self.real_elev[xmid, :] 
 		x_ymid_mean = list_xslice.mean(axis=1)
-		# print 'x_ymid_mean', x_ymid_mean 
-		# print '\n'
-		y_xmid_real = self.real_elev[:, ymid ] 
-		y_xmid_mean = list_yslice.mean(axis=1)
-		# print( x_ymid_real.shape , ' x_ymid_real shape')
-		# print( x_ymid_mean.shape , ' x_ymid_mean shape')
 		x_ymid_5th = np.percentile(list_xslice, 5, axis=1)
 		x_ymid_95th= np.percentile(list_xslice, 95, axis=1)
-
+		
+		y_xmid_real = self.real_elev[:, ymid ] 
+		y_xmid_mean = list_yslice.mean(axis=1)
 		y_xmid_5th = np.percentile(list_yslice, 5, axis=1)
 		y_xmid_95th= np.percentile(list_yslice, 95, axis=1)
 
@@ -354,7 +364,6 @@ class bayeslands_mcmc():
 		plt.title("Uncertainty in topography prediction (cross section)  ")
 		plt.xlabel(' Distance in kilometers  ')
 		plt.ylabel(' Height in meters')
-		
 		plt.savefig(self.filename+'/x_ymid_opt.png') 
 		plt.clf()
 
@@ -363,8 +372,7 @@ class bayeslands_mcmc():
 		plt.plot(x_, y_xmid_95th, label='pred.(95th percen.)')
 		plt.plot(x_, y_xmid_mean, label='pred. (mean)') 
 		plt.xlabel(' Distance in kilometers ')
-		plt.ylabel(' Height in meters')
-		
+		plt.ylabel(' Height in meters')		
 		plt.fill_between(x_, y_xmid_5th , y_xmid_95th, facecolor='g', alpha=0.4)
 		plt.legend(loc='upper right')
 
@@ -374,7 +382,7 @@ class bayeslands_mcmc():
 
 	def storeParams(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erdp, pos_tau_erdp_pts, pos_likl): 
 		"""
-		
+		storing the posterior distributions of parameters in a txt/csv file
 		"""
 		pos_rain = str(pos_rain)
 		pos_erod = str(pos_erod)
@@ -399,27 +407,8 @@ class bayeslands_mcmc():
 
 	def likelihoodFunc(self,input_vector, real_elev, real_erdp, real_erdp_pts, tausq_elev, tausq_erdp, tausq_erdp_pts):
 		"""
-		
+		Likelihood function implementation to be used for the MCMC chain in the metropolis-Hastings acceptance ratio
 		"""
-
-		# pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec = self.blackBox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
-
-		# tausq_elev = (np.sum(np.square(pred_elev_vec[self.simtime] - real_elev)))/real_elev.size
-
-		# tausq_erdp_pts = (np.sum(np.square(pred_erdp_pts_vec[self.simtime] - real_erdp_pts)))/real_erdp_pts.size
-		
-		# likelihood_elev = -0.5 * np.log(2* math.pi * tausq_elev) - 0.5 * np.square(pred_elev_vec[self.simtime] - real_elev) / tausq_elev
-		
-		# if self.likl_sed:
-		# 	#likelihood_erdp  = -0.5 * np.log(2* math.pi * tausq_erdp) - 0.5 * np.square(pred_erdp_vec[self.simtime] - real_erdp) / tausq_erdp		
-		# 	likelihood_erdp_pts = -0.5 * np.log(2* math.pi * tausq_erdp_pts) - 0.5 * np.square(pred_erdp_pts_vec[self.simtime] - real_erdp_pts) / tausq_erdp_pts
-		# 	likelihood = np.sum(likelihood_elev) + np.sum(likelihood_erdp_pts)
-
-		# else:
-		# 	likelihood = np.sum(likelihood_elev)
-
-		# return [likelihood, pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec]
-
 		pred_elev_vec, pred_erdp_vec, pred_erdp_pts_vec = self.blackBox(input_vector[0], input_vector[1], input_vector[2], input_vector[3])
 
 		tausq_elev = (np.sum(np.square(pred_elev_vec[self.simtime] - real_elev)))/real_elev.size
@@ -429,8 +418,6 @@ class bayeslands_mcmc():
 		for i in range(self.sim_interval.size):
 			tausq_erdp_pts[i] = np.sum(np.square(pred_erdp_pts_vec[self.sim_interval[i]] - self.real_erdp_pts[i]))/real_erdp_pts.shape[1]
 		
-		# print 'tausq_erdp_pts' , tausq_erdp_pts
-
 		likelihood_elev = -0.5 * np.log(2* math.pi * tausq_elev) - 0.5 * np.square(pred_elev_vec[self.simtime] - real_elev) / tausq_elev
 		likelihood_erdp_pts = 0
 
@@ -453,7 +440,7 @@ class bayeslands_mcmc():
 
 	def sampler(self):
 		"""
-		
+		Implementation of the MCMC sampler
 		"""
 		start = time.time()
 
@@ -463,11 +450,6 @@ class bayeslands_mcmc():
 		real_erdp = self.real_erdp
 		real_erdp_pts = self.real_erdp_pts
 
-		# UPDATE PARAMS AS PER EXPERIMENT
-		# self.viewGrid('real elev', 0 , 1.5, 5.e-5, zData=real_elev, title='Real Elevation')
-		# self.viewMap('real erdp', 0 , 1.5, 5.e-5,  zData=real_erdp, title='Real erdp')
-		# self.viewBar('real erdp_pts', 0 , 1.5, 5.e-5, xData = self.erdp_coords, yData=real_erdp_pts, title='Real erdp pts')
-		
 		# Creating storage for data
 		pos_erod = np.zeros(samples)
 		pos_rain = np.zeros(samples)
@@ -553,7 +535,6 @@ class bayeslands_mcmc():
 		print '\tinitial likelihood:', likelihood #, 'and initial rmse:', rmse
 
 		# Storing RMSE, tau values and adding initial run to accepted list
-		#pos_rmse = np.full(samples, rmse)
 		pos_tau_elev = np.full(samples, tau_elev)
 		pos_tau_erdp = np.full(samples,tau_erdp)
 		pos_tau_erdp_pts = np.full(samples, tau_erdp_pts)
@@ -566,10 +547,6 @@ class bayeslands_mcmc():
 		
 		# Saving parameters for Initial run
 		self.storeParams(0, pos_rain[0], pos_erod[0],pos_m[0], pos_n[0], pos_tau_elev[0], pos_tau_erdp[0] , pos_tau_erdp_pts[0], pos_likl[0]) #, pos_rmse[0])
-
-		# self.viewGrid('first sample elev', likelihood, rain, erod, zData=pred_elev[self.simtime], title='Export Slope Grid')
-		# self.viewMap('first sample erdp', likelihood, rain, erod, zData=pred_erdp[self.simtime], title='Export Slope Grid')
-		# self.viewBar('first sample erdp_pts', likelihood, rain, erod, xData = self.erdp_coords, yData=pred_erdp_pts[self.simtime], title='Export Slope Grid')
 
 		sum_elev = deepcopy(pred_elev)
 		sum_erdp = deepcopy(pred_erdp)
@@ -608,6 +585,11 @@ class bayeslands_mcmc():
 			v_proposal.append(p_m)
 			v_proposal.append(p_n)
 
+			#++++++++++++++++++++++++++++++ 
+			# IMPT: With the current implementation of the likelihood function
+			# random walk not being used on tau or eta. It is instead integrated
+			# out and analytically approximated.
+
 			# Updating eta_elev and and recalculating tau for proposal (pro)
 			eta_elev_pro = eta_elev + np.random.normal(0, step_eta_elev, 1)
 			tau_elev_pro = math.exp(eta_elev_pro)
@@ -618,6 +600,9 @@ class bayeslands_mcmc():
 			eta_erdp_pts_pro = eta_erdp_pts + np.random.normal(0, step_eta_erdp_pts, 1)
 			tau_erdp_pts_pro = math.exp(eta_erdp_pts_pro)
 			print 'eta_el', eta_elev_pro, 'eta_ero', eta_erdp_pro, 'eta_ero_pts', eta_erdp_pts_pro, 'tau_el', tau_elev_pro, 'tau_ero', tau_erdp_pro, 'tau_ero_pts', tau_erdp_pts_pro
+
+			# ++++++++++++++++++++++++++++++
+
 
 			# Passing paramters to calculate likelihood and rmse with new tau
 			[likelihood_proposal, pred_elev, pred_erdp, pred_erdp_pts] = self.likelihoodFunc(v_proposal, real_elev, real_erdp, real_erdp_pts, tau_elev_pro, tau_erdp_pro, tau_erdp_pts_pro)

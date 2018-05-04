@@ -7,8 +7,13 @@
 ##  located at the project root, or contact the authors.                             ##
 ##                                                                                   ##
 ##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+
+#Main Contributer: Danial Azam  Email: dazam92@gmail.com
+
 """
-This script is intended to 
+This script is intended to provide functionality of cropping, rescaling or editing the
+input topographies to be used in the model.
+
 """
 import time
 import itertools

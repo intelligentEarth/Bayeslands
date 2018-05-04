@@ -6,8 +6,11 @@
 ##  located at the project root, or contact the authors.                             ##
 ##                                                                                   ##
 ##~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~#~##
+
+#Main Contributer: Danial Azam  Email: dazam92@gmail.com
+
 """
-This script is intended to 
+This script is intended to generate the input and final-time topography used by the mcmc file.
 """
 import os
 import numpy as np
