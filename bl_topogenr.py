@@ -93,7 +93,6 @@ def interpolateArray(coords=None, z=None, dz=None):
 def topoGenerator(directory, inputname, rain, erodibility, m, n, simtime, erdp_coords, final_noise):
 	"""
 	
-
 	Parameters
 	----------
 	variable : directory
@@ -141,17 +140,16 @@ def topoGenerator(directory, inputname, rain, erodibility, m, n, simtime, erdp_c
 			erdp_pts[count] = erdp[val[0], val[1]]
 
 		# Adding Noise
-		tausq_elev = elev.max()* 0.01
-		tausq_erdp = erdp.max()* 0.01
-		tausq_erdp_pts = erdp_pts.max()* 0.01
+		tausq_elev = elev.max()* (0.01)
+		tausq_erdp = erdp.max()* (0.01)
+		tausq_erdp_pts = erdp_pts.max()*(0.01)
 		
 		elev_noise = np.random.normal(0, np.sqrt(tausq_elev), elev.size)
 		elev_noise = np.reshape(elev_noise,(elev.shape[0],elev.shape[1]))	
 		erdp_noise = np.random.normal(0, np.sqrt(tausq_erdp), erdp.size)
 		erdp_noise = np.reshape(erdp_noise,(erdp.shape[0],erdp.shape[1]))	
-		erdp_pts_noise = np.random.normal(0, np.sqrt(tausq_erdp_pts), erdp_pts.size)
+		erdp_pts_noise = np.random.normal(100, np.sqrt(100), erdp_pts.size)
 		erdp_pts_noise = np.reshape(erdp_pts_noise,(erdp_pts.shape))
-		#
 		
 		elev_=np.matrix(elev)
 		erdp_=np.matrix(erdp)
@@ -354,13 +352,14 @@ def main():
 	"""
 	
 	"""
-	choice = input("Please choose a Badlands example to create an Initial and Final Topography for:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
+	choice = input("Please choose a Badlands example to create an Initial and Final Topography for:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n 5) mountain\n")
 	directory = ""
 
 	erdp_coords_crater = np.array([[60,60],[52,67],[74,76],[62,45],[72,66],[85,73],[90,75],[44,86],[100,80],[88,69]])
 	erdp_coords_crater_fast = np.array([[60,60],[72,66],[85,73],[90,75],[44,86],[100,80],[88,69],[79,91],[96,77],[42,49]])
 	erdp_coords_etopo = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[72,73],[46,64]])
 	erdp_coords_etopo_fast = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[68,40],[72,44]])
+	erdp_coords_mountain = np.array([[5,5],[10,10],[20,20],[30,30],[40,40],[50,50],[25,25],[37,30],[44,27],[46,10]])
 	
 	final_noise = True
 
@@ -396,4 +395,11 @@ def main():
 		
 		print 'TopoGen for etopo completed in (s):',time.clock()-tstart
 
+	elif choice == 5:
+
+		tstart = time.clock()
+		directory = 'Examples/mountain'
+		topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 10000000, erdp_coords_mountain,final_noise)
+		
+		print 'TopoGen for mountain completed in (s):',time.clock()-tstart
 if __name__ == "__main__": main()
