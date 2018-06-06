@@ -140,15 +140,15 @@ def topoGenerator(directory, inputname, rain, erodibility, m, n, simtime, erdp_c
 			erdp_pts[count] = erdp[val[0], val[1]]
 
 		# Adding Noise
-		tausq_elev = elev.max()* (0.01)
-		tausq_erdp = erdp.max()* (0.01)
-		tausq_erdp_pts = erdp_pts.max()*(0.01)
+		tausq_elev = elev.max()* (0.01) + 0.5
+		tausq_erdp = erdp.max()* (0.01) + 0.5
+		tausq_erdp_pts = erdp_pts.max()*(0.01) + 0.5 
 		
 		elev_noise = np.random.normal(0, np.sqrt(tausq_elev), elev.size)
 		elev_noise = np.reshape(elev_noise,(elev.shape[0],elev.shape[1]))	
-		erdp_noise = np.random.normal(0, np.sqrt(tausq_erdp), erdp.size)
+		erdp_noise = np.random.normal(0, np.sqrt(abs(tausq_erdp)), erdp.size)
 		erdp_noise = np.reshape(erdp_noise,(erdp.shape[0],erdp.shape[1]))	
-		erdp_pts_noise = np.random.normal(100, np.sqrt(100), erdp_pts.size)
+		erdp_pts_noise = np.random.normal(0, np.sqrt(abs(tausq_erdp_pts)), erdp_pts.size)
 		erdp_pts_noise = np.reshape(erdp_pts_noise,(erdp_pts.shape))
 		
 		elev_=np.matrix(elev)
@@ -240,8 +240,8 @@ def viewGrid(directory,sample_num, likl, rain, erod, width = 1000, height = 1000
 		height=height,
 		scene=Scene(
 			zaxis=ZAxis(range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-			xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-			yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+			xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=5,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+			yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=5,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
 			bgcolor="rgb(244, 244, 248)"
 		)
 	)
