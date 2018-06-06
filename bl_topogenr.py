@@ -144,7 +144,7 @@ def topoGenerator(directory, inputname, rain, erodibility, m, n, simtime, erdp_c
 		tausq_erdp = erdp.max()* (0.01) + 0.5
 		tausq_erdp_pts = erdp_pts.max()*(0.01) + 0.5 
 		
-		elev_noise = np.random.normal(0, np.sqrt(tausq_elev), elev.size)
+		elev_noise = np.random.normal(0, np.sqrt(abs(tausq_elev)), elev.size)
 		elev_noise = np.reshape(elev_noise,(elev.shape[0],elev.shape[1]))	
 		erdp_noise = np.random.normal(0, np.sqrt(abs(tausq_erdp)), erdp.size)
 		erdp_noise = np.reshape(erdp_noise,(erdp.shape[0],erdp.shape[1]))	
