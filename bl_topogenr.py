@@ -45,6 +45,7 @@ from plotly.graph_objs import *
 from plotly.offline.offline import _plot_html
 plotly.offline.init_notebook_mode()
 
+
 def interpolateArray(coords=None, z=None, dz=None):
 	"""
 	Interpolate the irregular spaced dataset from badlands on a regular grid.
@@ -121,6 +122,15 @@ def topoGenerator(directory, inputname, rain, erodibility, m, n, simtime, erdp_c
 	model.force.rainVal[:] = rain
 	model.input.SPLm = m
 	model.input.SPLn = n
+
+	# bPts = model.recGrid.boundsPt
+	# print ('bPTs', bPts)
+	# ePts = model.recGrid.edgesPt
+	# print ('ePTs', ePts)
+	# print(model.disp)
+	# # model.force.disp[::bPts] = 0
+	# return
+
 
 	elev_vec = collections.OrderedDict()
 	erdp_vec = collections.OrderedDict()
@@ -348,10 +358,50 @@ def viewBar(directory,sample_num, likl, rain, erod, width = 500, height = 500, x
 		
 		return
 
+def checkUplift(directory, u_filename, t_filename):
+	upl = np.loadtxt('%s%s.csv' %(directory,u_filename))
+	top = np.loadtxt('%s%s.csv' %(directory,t_filename))
+	upl = upl.reshape(upl.shape[0],1)
+	print(upl.shape)
+	print(top.shape)
+	comb = np.hstack((top, upl))
+	
+	min_bound_x = comb[:,0].min()
+	max_bound_x = comb[:,0].max()
+	min_bound_y = comb[:,1].min()
+	max_bound_y = comb[:,1].max()
+
+	# print ('comb.shape', comb.shape)
+	# print ('comb[:,0:2]', comb[:,0:2])
+	# print ('max_b x', max_bound_x, 'min_b x', min_bound_x)
+	# print ('max_b y', max_bound_y, 'min_b y', min_bound_y)
+	for x in range(comb.shape[0]):
+		# print (comb[x,:])
+		row = comb[x,:]
+		ind_min_x = (row == min_bound_x)
+		ind_max_x = (row == max_bound_x)
+		ind_min_y = (row == min_bound_y)
+		ind_max_y = (row == max_bound_y)
+		# print (ind_min)
+		if (ind_min_x[0] == True or ind_max_x[0] == True) or (ind_min_y[1] == True or ind_max_y[1]==True):
+			# print('Im in the IF')
+			comb[x,3] = 0.0
+			# print (comb[x,:])
+
+	try:
+		os.remove('%s%s.csv'%(directory, u_filename))
+	except OSError:
+		pass
+	
+	np.savetxt('%s%s.csv'% (directory, u_filename), comb[:,3])
+	
+	return True
+
 def main():
 	"""
 	
 	"""
+	uplift_verified = False
 	choice = input("Please choose a Badlands example to create an Initial and Final Topography for:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n 5) mountain\n")
 	directory = ""
 
@@ -399,7 +449,11 @@ def main():
 
 		tstart = time.clock()
 		directory = 'Examples/mountain'
-		topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 10000000, erdp_coords_mountain,final_noise)
+		uplift_verified = checkUplift(directory, '/data/uplift', '/data/nodes')
+		# uplift_verified = True
+		if uplift_verified:
+			topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 10000000, erdp_coords_mountain,final_noise)
 		
 		print 'TopoGen for mountain completed in (s):',time.clock()-tstart
+
 if __name__ == "__main__": main()
