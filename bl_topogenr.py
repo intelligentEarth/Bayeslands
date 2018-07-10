@@ -362,8 +362,8 @@ def checkUplift(directory, u_filename, t_filename):
 	upl = np.loadtxt('%s%s.csv' %(directory,u_filename))
 	top = np.loadtxt('%s%s.csv' %(directory,t_filename))
 	upl = upl.reshape(upl.shape[0],1)
-	print(upl.shape)
-	print(top.shape)
+	# print(upl.shape)
+	# print(top.shape)
 	comb = np.hstack((top, upl))
 	
 	min_bound_x = comb[:,0].min()
@@ -389,12 +389,13 @@ def checkUplift(directory, u_filename, t_filename):
 			# print (comb[x,:])
 
 	try:
-		os.remove('%s%s.csv'%(directory, u_filename))
+		if os.path.exists('%s%s.csv'% (directory, u_filename)):
+			os.remove('%s%s.csv'% (directory, u_filename))
 	except OSError:
 		pass
-	
+
 	np.savetxt('%s%s.csv'% (directory, u_filename), comb[:,3])
-	
+
 	return True
 
 def main():
@@ -453,7 +454,6 @@ def main():
 		# uplift_verified = True
 		if uplift_verified:
 			topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 10000000, erdp_coords_mountain,final_noise)
-		
 		print 'TopoGen for mountain completed in (s):',time.clock()-tstart
 
 if __name__ == "__main__": main()
