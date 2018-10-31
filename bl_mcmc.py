@@ -755,8 +755,10 @@ def main():
 	erdp_coords_etopo = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[72,73],[46,64]])
 	erdp_coords_etopo_fast = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[68,40],[72,44]])
 
-	choice = input("Please choose a Badlands example to run the MCMC algorithm on:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
-	samples = input("Please enter number of samples : \n")
+	#choice = input("Please choose a Badlands example to run the MCMC algorithm on:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
+	choice = int(sys.argv[1])
+	samples = int(sys.argv[2])
+	#samples = input("Please enter number of samples : \n")
 
 	if choice == 1:
 		directory = 'Examples/crater_fast'
@@ -810,6 +812,18 @@ def main():
 		likl_sed = True
 		erdp_coords = erdp_coords_etopo
 
+	elif choice == 5:
+		directory = 'Examples/tasmania'
+		xmlinput = '%s/tasmania.xml' %(directory)
+		simtime = 1000000
+		rainlimits = [0.0, 3.0]
+		erodlimits = [3.e-6, 7.e-6]
+		mlimit = [0.4, 0.6]
+		nlimit = [0.9, 1.1]
+		true_rain = 1.5
+		true_erod = 5.e-6
+		likl_sed = False
+		erdp_coords = erdp_coords_etopo
 	else:
 		print('Invalid selection, please choose a problem from the list ')
 

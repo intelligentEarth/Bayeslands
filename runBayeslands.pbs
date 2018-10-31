@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Directives sent to pbs, the job scheduler on Artemis
+#PBS -P BGH 
+#PBS -N mybadlandsrun 
+#PBS -l select=1:ncpus=10:mem=60gb
+#PBS -l walltime=2:10:00
+#PBS -q alloc-dm
+
+# Load the libraries and software needed
+module load openmpi-gcc/1.10.3 gcc/4.9.0 glib
+
+#Set up our environment so bayeslands knows where things are located
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/project/BGH/paralleltemp_Bayeslands/pyBadlands/libUtils
+export PYTHON_PATH=$PYTHON_PATH:/project/BGH/paralleltemp_Bayeslands/pyBadlands/libUtils
+
+#Activate a specific python environment
+source /home/maza4291/anaconda2/bin/activate pybadlands 
+
+#Change into the directory where we executed this script (otherwise it will try and run in /home/unikey)
+cd $PBS_O_WORKDIR
+cd /project/BGH/danial/Bayeslands
+
+#Now run some commands #python ptBayeslands_sedvec.py Problem Samples NumChain
+python bl_mcmc.py 5 10000
