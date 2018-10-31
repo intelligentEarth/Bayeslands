@@ -14,6 +14,7 @@ This script is intended to implement an MCMC (Markov Chain Monte Carlo) Metropol
 Badlands is used as a "black box" model for bayesian methods.
 """
 import os
+import sys
 import numpy as np
 import random
 import time

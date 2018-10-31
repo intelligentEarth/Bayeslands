@@ -1,4 +1,5 @@
 *.pyc
+*.dropbox
 *.sublime-*
 *.so
 pyBadlands.egg-info/
