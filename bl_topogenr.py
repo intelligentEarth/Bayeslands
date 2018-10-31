@@ -403,7 +403,7 @@ def main():
 	
 	"""
 	uplift_verified = False
-	choice = input("Please choose a Badlands example to create an Initial and Final Topography for:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n 5) mountain\n")
+	choice = input("Please choose a Badlands example to create an Initial and Final Topography for:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n 5) mountain\n 6) tasmania\n")
 	directory = ""
 
 	erdp_coords_crater = np.array([[60,60],[52,67],[74,76],[62,45],[72,66],[85,73],[90,75],[44,86],[100,80],[88,69]])
@@ -453,7 +453,14 @@ def main():
 		uplift_verified = checkUplift(directory, '/data/uplift', '/data/nodes')
 		# uplift_verified = True
 		if uplift_verified:
-			topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 10000000, erdp_coords_mountain,final_noise)
+			topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 50000000, erdp_coords_mountain,final_noise)
+		print 'TopoGen for mountain completed in (s):',time.clock()-tstart
+
+	elif choice == 6:
+
+		tstart = time.clock()
+		directory = 'Examples/tasmania'
+		topoGenerator(directory,'%s/tasmania.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 1000000, erdp_coords_mountain,final_noise)
 		print 'TopoGen for mountain completed in (s):',time.clock()-tstart
 
 if __name__ == "__main__": main()
