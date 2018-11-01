@@ -533,6 +533,20 @@ def main():
 		likl_sed = True
 		erdp_coords = erdp_coords_etopo
 
+	elif choice == 5:
+		directory = 'Examples/tasmania'
+		xmlinput = '%s/tasmania.xml' %(directory)
+		simtime = 1000000
+		rainlimits = [0.0, 3.0]
+		erodlimits = [3.e-6, 7.e-6]
+		mlimit = [0.4, 0.6]
+		nlimit = [0.9, 1.1]
+		marinelimit = [0.3,0.7]
+		aeriallimit = [0.6,1.0]
+		true_rain = 1.5
+		true_erod = 5.e-6
+		likl_sed = True
+		erdp_coords = erdp_coords_etopo
 	else:
 		print('Invalid selection, please choose a problem from the list ')
 

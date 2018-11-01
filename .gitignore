@@ -28,10 +28,12 @@ Examples/crater/mcmcresults_*
 Examples/crater_*/mcmcresults_*
 Examples/etopo/mcmcresults_*
 Examples/etopo_*/mcmcresults_*
+Examples/tasmania/mcmcresults_*
 
 Examples/crater/liklSurface_*
 Examples/crater_*/liklSurface_*
 Examples/etopo/liklSurface_*
 Examples/etopo_*/liklSurface_*
+Examples/tasmania/liklSurface_*
 
 Figures_BayesLands_figure/*

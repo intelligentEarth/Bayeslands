@@ -347,8 +347,10 @@ def timevariantErodep(directory, fname, real_erdp_pts, filenames, run_nb):
 	return
 
 def main():
-	functionality = input("Would you like to: \n 1) Plot Posterior Histogram for Params\n 2) Calculate Covariance mat for Params\n 3) Sediment variation with time\n")
-	choice = input("Please choose a Badlands example to apply it to:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
+	# functionality = input("Would you like to: \n 1) Plot Posterior Histogram for Params\n 2) Calculate Covariance mat for Params\n 3) Sediment variation with time\n")
+	# choice = input("Please choose a Badlands example to apply it to:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
+	functionality = int(sys.argv[1]) 
+	choice = int(sys.argv[2])
 	directory = ""
 
 	if choice == 1:
@@ -367,7 +369,10 @@ def main():
 		directory = 'Examples/etopo'
 		rain_true_val = 1.5
 		erod_true_val = 5.e-6
-
+	elif choice ==5:
+		directory = 'Examples/tasmania'
+		rain_true_val = 1.5
+		erod_true_val = 5.e-6
 
 	run_nb = input('Please enter the folder number for Experiment i.e. mcmcresults_% ')
 	fname = '%s/mcmcresults_%s/' % (directory,run_nb)
