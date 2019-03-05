@@ -43,6 +43,15 @@ from plotly.graph_objs import *
 from plotly.offline.offline import _plot_html
 plotly.offline.init_notebook_mode()
 
+parser=argparse.ArgumentParser(description='PTBayeslands modelling')
+
+parser.add_argument('-p','--problem', help='Problem Number 1-crater-fast,2-crater,3-etopo-fast,4-etopo,5-null,6-mountain', required=True, dest="problem",type=int)
+parser.add_argument('-f','--functionality', help="Would you like to: \n 1) Plot Posterior Histogram for Params\n 2) Calculate Covariance mat for Params\n 3) Sediment variation with time\n", required=True, dest="functionality",type=int)
+
+args = parser.parse_args()
+problem = args.problem
+functionality = args.functionality
+
 def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	
 	burnin = 0.05 * len(pos_likl)  # use post burn in samples
@@ -347,29 +356,25 @@ def timevariantErodep(directory, fname, real_erdp_pts, filenames, run_nb):
 	return
 
 def main():
-	# functionality = input("Would you like to: \n 1) Plot Posterior Histogram for Params\n 2) Calculate Covariance mat for Params\n 3) Sediment variation with time\n")
-	# choice = input("Please choose a Badlands example to apply it to:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
-	functionality = int(sys.argv[1]) 
-	choice = int(sys.argv[2])
 	directory = ""
 
-	if choice == 1:
+	if problem == 1:
 		directory = 'Examples/crater_fast'
 		rain_true_val = 1.5
 		erod_true_val = 5.e-5
-	elif choice == 2:
+	elif problem == 2:
 		directory = 'Examples/crater'
 		rain_true_val = 1.5
 		erod_true_val = 5.e-5
-	elif choice == 3:
+	elif problem == 3:
 		directory = 'Examples/etopo_fast'
 		rain_true_val = 1.5
 		erod_true_val = 5.e-6
-	elif choice == 4:
+	elif problem == 4:
 		directory = 'Examples/etopo'
 		rain_true_val = 1.5
 		erod_true_val = 5.e-6
-	elif choice ==5:
+	elif problem ==5:
 		directory = 'Examples/tasmania'
 		rain_true_val = 1.5
 		erod_true_val = 5.e-6
