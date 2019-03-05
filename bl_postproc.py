@@ -23,6 +23,7 @@ import cmocean as cmo
 import fnmatch
 import shutil
 import plotly
+import argparse
 import plotly.plotly as py
 import plotly.graph_objs as go
 import matplotlib as mpl
@@ -47,10 +48,12 @@ parser=argparse.ArgumentParser(description='PTBayeslands modelling')
 
 parser.add_argument('-p','--problem', help='Problem Number 1-crater-fast,2-crater,3-etopo-fast,4-etopo,5-null,6-mountain', required=True, dest="problem",type=int)
 parser.add_argument('-f','--functionality', help="Would you like to: \n 1) Plot Posterior Histogram for Params\n 2) Calculate Covariance mat for Params\n 3) Sediment variation with time\n", required=True, dest="functionality",type=int)
+parser.add_argument('-b','--bins', help="number of bins in Histogram", required=True, dest="bins",type=int)
 
 args = parser.parse_args()
 problem = args.problem
 functionality = args.functionality
+bins = args.bins
 
 def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	
@@ -77,39 +80,67 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	rainm,rains = stats.norm.fit(pos_rain)
 	pdf_rain = stats.norm.pdf(rainspace,rainm,rains)
 	
-	fig = plt.figure(figsize=(10,12))
-	ax = fig.add_subplot(111)
-	ax.spines['top'].set_color('none')
-	ax.spines['bottom'].set_color('none')
-	ax.spines['left'].set_color('none')
-	ax.spines['right'].set_color('none')
-	ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
-	ax.set_title(' Rain Parameter', fontsize=  font+2)#, y=1.02)
+	# fig = plt.figure(figsize=(10,12))
+	# ax = fig.add_subplot(111)
+	# ax.spines['top'].set_color('none')
+	# ax.spines['bottom'].set_color('none')
+	# ax.spines['left'].set_color('none')
+	# ax.spines['right'].set_color('none')
+	# ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+	# ax.set_title(' Rain Parameter', fontsize=  font+2)#, y=1.02)
 	
-	ax1 = fig.add_subplot(211)
-	ax1.set_facecolor('#f2f2f3')
-	# ax1.set_axis_bgcolor("white")
-	n, rainbins, patches = ax1.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)	
+	# ax1 = fig.add_subplot(211)
+	# ax1.set_facecolor('#f2f2f3')
+	# # ax1.set_axis_bgcolor("white")
+	# n, rainbins, patches = ax1.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)	
 	
-	for count, v in enumerate(rain_true_val):
-			ax1.axvline(x=v, color='%s' %(color[count]), linestyle='dashed', linewidth=1) # comment when go real value is 
+	# for count, v in enumerate(rain_true_val):
+	# 		ax1.axvline(x=v, color='%s' %(color[count]), linestyle='dashed', linewidth=1) # comment when go real value is 
 
-	ax1.grid(True)
-	ax1.set_ylabel('Frequency',size= font+1)
-	ax1.set_xlabel('Rain', size= font+1)
+	# ax1.grid(True)
+	# ax1.set_ylabel('Frequency',size= font+1)
+	# ax1.set_xlabel('Rain', size= font+1)
 	
-	ax2 = fig.add_subplot(212)
-	ax2.set_facecolor('#f2f2f3')
-	ax2.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
-	ax2.set_title('Trace of Rain',size= font+2)
-	ax2.set_xlabel('Samples',size= font+1)
-	ax2.set_ylabel('Rain', size= font+1)
-	ax2.set_xlim([0,np.amax(slen)])
+	# ax2 = fig.add_subplot(212)
+	# ax2.set_facecolor('#f2f2f3')
+	# ax2.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
+	# ax2.set_title('Trace of Rain',size= font+2)
+	# ax2.set_xlabel('Samples',size= font+1)
+	# ax2.set_ylabel('Rain', size= font+1)
+	# ax2.set_xlim([0,np.amax(slen)])
 
-	fig.tight_layout()
-	fig.subplots_adjust(top=0.88)
-	plt.savefig('%srain.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
+	# fig.tight_layout()
+	# fig.subplots_adjust(top=0.88)
+	# plt.savefig('%srain.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
+	# plt.clf()
+
+	size = 15
+
+	plt.tick_params(labelsize=size)
+	params = {'legend.fontsize': size, 'legend.handlelength': 2}
+	plt.rcParams.update(params)
+	plt.grid(alpha=0.75)
+
+	plt.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)	
+	plt.title("Posterior distribution ", fontsize = size)
+	plt.xlabel(' Parameter value  ', fontsize = size)
+	plt.ylabel(' Frequency ', fontsize = size)
+	plt.tight_layout()  
+	plt.savefig(fname + 'plots/' +'rain_posterior.pdf')
 	plt.clf()
+	
+	plt.tick_params(labelsize=size)
+	params = {'legend.fontsize': size, 'legend.handlelength': 2}
+	plt.rcParams.update(params)
+
+	plt.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
+	plt.title("Parameter trace plot", fontsize = size)
+	plt.xlabel(' Number of Samples  ', fontsize = size)
+	plt.ylabel(' Parameter value ', fontsize = size)
+	plt.tight_layout()  
+	plt.savefig(fname + 'plots/' +'rain_trace.pdf')
+	plt.clf()
+
 
 	#####################################      EROD    ################################
 
@@ -120,38 +151,64 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	erodm,erods = stats.norm.fit(pos_erod)
 	pdf_erod = stats.norm.pdf(erodspace,erodm,erods)
 
-	#erod_opt_value = 9.e-05	
-	fig = plt.figure(figsize=(10,12))
-	ax = fig.add_subplot(111)
-	ax.spines['top'].set_color('none')
-	ax.spines['bottom'].set_color('none')
-	ax.spines['left'].set_color('none')
-	ax.spines['right'].set_color('none')
-	ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
-	ax.set_title(' Erosion Parameter', fontsize=  font+2)#, y=1.02)
+	# #erod_opt_value = 9.e-05	
+	# fig = plt.figure(figsize=(10,12))
+	# ax = fig.add_subplot(111)
+	# ax.spines['top'].set_color('none')
+	# ax.spines['bottom'].set_color('none')
+	# ax.spines['left'].set_color('none')
+	# ax.spines['right'].set_color('none')
+	# ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+	# ax.set_title(' Erosion Parameter', fontsize=  font+2)#, y=1.02)
 
-	ax1 = fig.add_subplot(211)
-	ax1.set_facecolor('#f2f2f3')
-	# ax1.set_axis_bgcolor("white")
-	n, erodbins, patches = ax1.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', normed=False)
+	# ax1 = fig.add_subplot(211)
+	# ax1.set_facecolor('#f2f2f3')
+	# # ax1.set_axis_bgcolor("white")
+	# n, erodbins, patches = ax1.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)
 
-	for count, v in enumerate(erod_true_val):
-			ax1.axvline(x=v, color='%s' %(color[count]), linestyle='dashed', linewidth=1) # comment when go real value is 
+	# for count, v in enumerate(erod_true_val):
+	# 		ax1.axvline(x=v, color='%s' %(color[count]), linestyle='dashed', linewidth=1) # comment when go real value is 
 
-	ax1.grid(True)
-	ax1.set_ylabel('Frequency',size= font+1)
-	ax1.set_xlabel('Erodibility', size= font+1)
+	# ax1.grid(True)
+	# ax1.set_ylabel('Frequency',size= font+1)
+	# ax1.set_xlabel('Erodibility', size= font+1)
 	
-	ax2 = fig.add_subplot(212)
-	ax2.set_facecolor('#f2f2f3')
-	ax2.plot(slen,pos_erod,linestyle='-', linewidth= width, color='k', label=None)
-	ax2.set_title('Trace of Erodibility',size= font+2)
-	ax2.set_xlabel('Samples',size= font+1)
-	ax2.set_ylabel('Erodibility', size= font+1)
-	ax2.set_xlim([0,np.amax(slen)])
-	fig.tight_layout()
-	fig.subplots_adjust(top=0.88)
-	plt.savefig('%serod.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
+	# ax2 = fig.add_subplot(212)
+	# ax2.set_facecolor('#f2f2f3')
+	# ax2.plot(slen,pos_erod,linestyle='-', linewidth= width, color='k', label=None)
+	# ax2.set_title('Trace of Erodibility',size= font+2)
+	# ax2.set_xlabel('Samples',size= font+1)
+	# ax2.set_ylabel('Erodibility', size= font+1)
+	# ax2.set_xlim([0,np.amax(slen)])
+	# fig.tight_layout()
+	# fig.subplots_adjust(top=0.88)
+	# plt.savefig('%serod.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
+	# plt.clf()
+	size = 15
+
+	plt.tick_params(labelsize=size)
+	params = {'legend.fontsize': size, 'legend.handlelength': 2}
+	plt.rcParams.update(params)
+	plt.grid(alpha=0.75)
+
+	plt.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)	
+	plt.title("Posterior distribution ", fontsize = size)
+	plt.xlabel(' Parameter value  ', fontsize = size)
+	plt.ylabel(' Frequency ', fontsize = size)
+	plt.tight_layout()  
+	plt.savefig(fname + 'plots/'  + 'erod_posterior.pdf')
+	plt.clf()
+	
+	plt.tick_params(labelsize=size)
+	params = {'legend.fontsize': size, 'legend.handlelength': 2}
+	plt.rcParams.update(params)
+
+	plt.plot(slen,pos_erod,linestyle='-', linewidth= width, color='k', label=None)
+	plt.title("Parameter trace plot", fontsize = size)
+	plt.xlabel(' Number of Samples  ', fontsize = size)
+	plt.ylabel(' Parameter value ', fontsize = size)
+	plt.tight_layout()  
+	plt.savefig(fname + 'plots/' +'erod_trace.pdf')
 	plt.clf()
 
 	#####################################      likl    ################################
@@ -166,7 +223,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	ax.spines['bottom'].set_color('none')
 	ax.spines['left'].set_color('none')
 	ax.spines['right'].set_color('none')
-	ax.tick_params(labelcolor='w', top='off', bottom='off', left = 'off', right='off')
+	ax.tick_params(labelcolor='w', top=False, bottom=False, left = False, right=False)
 	
 	ax1 = fig.add_subplot(211)
 	ax1.set_facecolor('#f2f2f3')
@@ -189,7 +246,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	ax.spines['bottom'].set_color('none')
 	ax.spines['left'].set_color('none')
 	ax.spines['right'].set_color('none')
-	ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+	ax.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
 	ax.set_title(' Rain Parameter', fontsize=  font+2)#, y=1.02)
 	
 	ax1 = fig.add_subplot(212, projection = '3d')
@@ -305,15 +362,15 @@ def covarMat (fname, pos_rain, pos_erod):
 
 def atoi(text):
 
-    return int(text) if text.isdigit() else text
+	return int(text) if text.isdigit() else text
 
 def natural_keys(text):
-    '''
-    alist.sort(key=natural_keys) sorts in human order
-    http://nedbatchelder.com/blog/200712/human_sorting.html
-    (See Toothy's implementation in the comments)
-    '''
-    return [ atoi(c) for c in re.split('(\d+)', text) ]
+	'''
+	alist.sort(key=natural_keys) sorts in human order
+	http://nedbatchelder.com/blog/200712/human_sorting.html
+	(See Toothy's implementation in the comments)
+	'''
+	return [ atoi(c) for c in re.split('(\d+)', text) ]
 
 def timevariantErodep(directory, fname, real_erdp_pts, filenames, run_nb):
 	
@@ -379,7 +436,9 @@ def main():
 		rain_true_val = 1.5
 		erod_true_val = 5.e-6
 
-	run_nb = input('Please enter the folder number for Experiment i.e. mcmcresults_% ')
+	# run_nb = input('Please enter the folder number for Experiment i.e. mcmcresults_% ')
+	run_nb = np.loadtxt('latest_run.txt')
+	run_nb = int(run_nb)
 	fname = '%s/mcmcresults_%s/' % (directory,run_nb)
 	exp_data = '%s/mcmcresults_%s/exp_data.txt' % (directory,run_nb)
 	prediction_data = '%s/mcmcresults_%s/prediction_data/' % (directory,run_nb)
@@ -415,9 +474,7 @@ def main():
 	prefixed = [filename for filename in os.listdir(prediction_data) if filename.startswith("mean_pred_erdp_pts_")]
 
 	if functionality == 1:
-		bins= input("Please enter Bin Size for Histogram (e.g. 10, 20 ,30 ...")
 		plotFunctions(fname, likl_, rain_, erod_, bins, t_val_)
-		# plotFunctions(fname, likl_, rain_, erod_, bins, rain_true_val, erod_true_val)
 		print '\nFinished plotting'
 
 	elif functionality ==2:

@@ -109,8 +109,8 @@ class bayeslands_mcmc():
 			Requested uniform erodibility value.
 		variable: m, n
 			Values of m and n indicate how the incision rate scales
-            with bed shear stress for constant value of sediment flux
-            and sediment transport capacity.
+			with bed shear stress for constant value of sediment flux
+			and sediment transport capacity.
 		
 		Returns
 		------
@@ -302,17 +302,17 @@ class bayeslands_mcmc():
 		variable : likl, rain, erod
 			values of rain, erodibility and likelihood to display on the map
 		variable: width
-		    Figure width.
+			Figure width.
 		variable: height
-		    Figure height.
+			Figure height.
 		variable: zmin
-		    Minimal elevation.
+			Minimal elevation.
 		variable: zmax
-		    Maximal elevation.
+			Maximal elevation.
 		variable: zData
-		    Elevation data to plot.
+			Elevation data to plot.
 		variable: title
-		    Title of the graph.
+			Title of the graph.
 		"""
 
 		if zmin == None:
@@ -366,30 +366,34 @@ class bayeslands_mcmc():
 		x = np.linspace(0, x_ymid_mean.size , num=x_ymid_mean.size) 
 		x_ = np.linspace(0, y_xmid_mean.size , num=y_xmid_mean.size)
 
-		plt.plot(x, x_ymid_real, label='ground truth') 
-		plt.plot(x, x_ymid_5th, label='pred.(5th percen.)')
-		plt.plot(x, x_ymid_95th, label='pred.(95th percen.)')
-		plt.plot(x, x_ymid_mean, label='pred. (mean)')
-		plt.fill_between(x, x_ymid_5th , x_ymid_95th, facecolor='g', alpha=0.4)
-		plt.legend(loc='upper right')
+		size = 15
 
-		plt.title("Uncertainty in topography prediction (cross section)  ")
-		plt.xlabel(' Distance in kilometers  ')
-		plt.ylabel(' Height in meters')
-		plt.savefig(self.filename+'/x_ymid_opt.png') 
+		plt.tick_params(labelsize=size)
+		params = {'legend.fontsize': size, 'legend.handlelength': 2}
+		plt.rcParams.update(params)
+		plt.plot(x, x_ymid_real, label='Ground Truth') 
+		plt.plot(x, x_ymid_mean, label='Badlands Pred.')
+		plt.fill_between(x, x_ymid_5th , x_ymid_95th, facecolor='g', alpha=0.4)
+		plt.legend(loc='best')
+		plt.title("Topography  cross section   ", fontsize = size)
+		plt.xlabel(' Distance (km)  ', fontsize = size)
+		plt.ylabel(' Height (m)', fontsize = size)
+		plt.tight_layout()
+		plt.savefig(self.filename+'/x_ymid_opt.pdf')
 		plt.clf()
 
-		plt.plot(x_, y_xmid_real, label='ground truth') 
-		plt.plot(x_, y_xmid_5th, label='pred.(5th percen.)')
-		plt.plot(x_, y_xmid_95th, label='pred.(95th percen.)')
-		plt.plot(x_, y_xmid_mean, label='pred. (mean)') 
-		plt.xlabel(' Distance in kilometers ')
-		plt.ylabel(' Height in meters')		
+		plt.tick_params(labelsize=size)
+		params = {'legend.fontsize': size, 'legend.handlelength': 2}
+		plt.rcParams.update(params)
+		plt.plot(x_, y_xmid_real, label='Ground Truth') 
+		plt.plot(x_, y_xmid_mean, label='Badlands Pred.')
 		plt.fill_between(x_, y_xmid_5th , y_xmid_95th, facecolor='g', alpha=0.4)
-		plt.legend(loc='upper right')
-
-		plt.title("Uncertainty in topography prediction  (cross section)  ")
-		plt.savefig(self.filename+'/y_xmid_opt.png') 
+		plt.legend(loc='best')
+		plt.title("Topography  cross section   ", fontsize = size)
+		plt.xlabel(' Distance (km)  ', fontsize = size)
+		plt.ylabel(' Height (m)', fontsize = size)
+		plt.tight_layout()
+		plt.savefig(self.filename+'/y_xmid_opt.pdf')
 		plt.clf()
 
 	def storeParams(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erdp, pos_tau_erdp_pts, pos_likl): 
@@ -476,8 +480,10 @@ class bayeslands_mcmc():
 
 		# List of accepted samples
 		count_list = []
+		accept_list = np.zeros(samples)
 
 		num_div = 0
+		accept_counter = 0
 
 		print 'Initial Values of parameters: '
 		# UPDATE PARAMS AS PER EXPERIMENT
@@ -632,7 +638,7 @@ class bayeslands_mcmc():
 				mh_prob = 1
 
 			u = random.uniform(0,1)
-			#print 'u', u, 'and mh_probability', mh_prob
+			accept_list[i+1] = accept_counter
 
 			if u < mh_prob: # Accept sample
 				print i, 'ACCEPTED\n with likelihood:',likelihood
@@ -666,6 +672,8 @@ class bayeslands_mcmc():
 				prev_acpt_erdp.update(pred_erdp)
 				prev_acpt_erdp_pts.update(pred_erdp_pts)
 				
+				accept_counter += 1
+
 				if i>burnsamples:
 					for k, v in pred_elev.items():
 						sum_elev[k] += v
@@ -735,14 +743,14 @@ class bayeslands_mcmc():
 		total_time = end - start
 		total_time_mins = total_time/60
 		accepted_count =  len(count_list)
-		print (count_list)
+		# print (count_list)
 		accept_ratio = accepted_count / (samples * 1.0) * 100
 		
 		print 'Time elapsed: (s)', total_time
 		print accepted_count, ' number accepted'
 		print len(count_list) / (samples * 0.01), '% was accepted'
 		print 'Results are stored in ', self.filename
-		
+
 		with file(('%s/experiment_stats.txt' % (self.filename)),'w') as outres:
 			outres.write('MSEelev: {0}\nMSEerdp: {1}\nMSEerdp_pts: {2}\nTime:(s) {3}\nTime:(mins) {4}\n'.format(mse_elev,mse_erdp,mse_erdp_pts,total_time,total_time_mins))
 			outres.write('Accept ratio: {0} %\nSamples accepted : {1} out of {2}\n Count List : {3} '.format(accept_ratio, accepted_count, self.samples, count_list))
@@ -751,6 +759,19 @@ class bayeslands_mcmc():
 		np.savetxt('%s/prediction_data/pred_yslc.txt' % (self.filename), list_yslicepred )
 
 		self.viewCrossSection(list_xslicepred.T, list_yslicepred.T)
+
+		size = 15 
+		plt.tick_params(labelsize=size)
+		params = {'legend.fontsize': size, 'legend.handlelength': 2}
+		plt.rcParams.update(params)
+		plt.plot(accept_list.T)
+		plt.title("Replica Acceptance ", fontsize = size)
+		plt.xlabel(' Number of Samples  ', fontsize = size)
+		plt.ylabel(' Number Accepted ', fontsize = size)
+		plt.tight_layout()
+		plt.savefig(self.filename+'/accept_list.pdf' )
+		plt.clf()
+		
 		return
 
 def main():
@@ -851,6 +872,8 @@ def main():
 
 	bl_mcmc = bayeslands_mcmc(muted, simtime, samples, final_elev, final_erdp, final_erdp_pts, erdp_coords, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str, likl_sed)
 	bl_mcmc.sampler()
+
+	np.savetxt('latest_run.txt', np.array([str(run_nb)]), fmt="%s")
 
 	print '\nsuccessfully sampled\nFinished simulations'
 
