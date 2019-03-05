@@ -47,6 +47,16 @@ from plotly.graph_objs import *
 from plotly.offline.offline import _plot_html
 plotly.offline.init_notebook_mode()
 
+
+parser=argparse.ArgumentParser(description='PTBayeslands modelling')
+
+parser.add_argument('-p','--problem', help='Problem Number 1-crater-fast,2-crater,3-etopo-fast,4-etopo,5-null,6-mountain', required=True, dest="problem",type=int)
+parser.add_argument('-s','--samples', help='Number of samples', default=10000, dest="samples",type=int)
+
+args = parser.parse_args()
+problem = args.problem
+samples = args.samples
+
 class bayeslands_mcmc():
 	"""
 		
@@ -756,12 +766,7 @@ def main():
 	erdp_coords_etopo = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[72,73],[46,64]])
 	erdp_coords_etopo_fast = np.array([[42,10],[39,8],[75,51],[59,13],[40,5],[6,20],[14,66],[4,40],[68,40],[72,44]])
 
-	#choice = input("Please choose a Badlands example to run the MCMC algorithm on:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n")
-	choice = int(sys.argv[1])
-	samples = int(sys.argv[2])
-	#samples = input("Please enter number of samples : \n")
-
-	if choice == 1:
+	if problem == 1:
 		directory = 'Examples/crater_fast'
 		xmlinput = '%s/crater.xml' %(directory)
 		simtime = 15000
@@ -774,7 +779,7 @@ def main():
 		likl_sed = True
 		erdp_coords = erdp_coords_crater_fast
 
-	elif choice == 2:
+	elif problem == 2:
 		directory = 'Examples/crater'
 		xmlinput = '%s/crater.xml' %(directory)
 		simtime = 50000
@@ -787,7 +792,7 @@ def main():
 		likl_sed = True
 		erdp_coords = erdp_coords_crater
 
-	elif choice == 3:
+	elif problem == 3:
 		directory = 'Examples/etopo_fast'
 		xmlinput = '%s/etopo.xml' %(directory)
 		simtime = 500000
@@ -800,7 +805,7 @@ def main():
 		likl_sed = True
 		erdp_coords = erdp_coords_etopo_fast
 
-	elif choice == 4:
+	elif problem == 4:
 		directory = 'Examples/etopo'
 		xmlinput = '%s/etopo.xml' %(directory)
 		simtime = 1000000
@@ -813,7 +818,7 @@ def main():
 		likl_sed = True
 		erdp_coords = erdp_coords_etopo
 
-	elif choice == 5:
+	elif problem == 5:
 		directory = 'Examples/tasmania'
 		xmlinput = '%s/tasmania.xml' %(directory)
 		simtime = 1000000
