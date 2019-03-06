@@ -23,6 +23,7 @@ __MACOSX
 doc/_build/
 tags
 doc/env/
+*latest_run.txt
 
 Examples/crater/mcmcresults_*
 Examples/crater_*/mcmcresults_*

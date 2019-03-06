@@ -873,7 +873,7 @@ def main():
 	bl_mcmc = bayeslands_mcmc(muted, simtime, samples, final_elev, final_erdp, final_erdp_pts, erdp_coords, filename, xmlinput, erodlimits, rainlimits, mlimit, nlimit, run_nb_str, likl_sed)
 	bl_mcmc.sampler()
 
-	np.savetxt('latest_run.txt', np.array([str(run_nb)]), fmt="%s")
+	np.savetxt('%s/latest_run.txt' %(directory), np.array([str(run_nb)]), fmt="%s")
 
 	print '\nsuccessfully sampled\nFinished simulations'
 
