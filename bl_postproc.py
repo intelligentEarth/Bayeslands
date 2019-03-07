@@ -24,6 +24,7 @@ import fnmatch
 import shutil
 import plotly
 import argparse
+import calendar
 import plotly.plotly as py
 import plotly.graph_objs as go
 import matplotlib as mpl
@@ -49,11 +50,13 @@ parser=argparse.ArgumentParser(description='PTBayeslands modelling')
 parser.add_argument('-p','--problem', help='Problem Number 1-crater-fast,2-crater,3-etopo-fast,4-etopo,5-null,6-mountain', required=True, dest="problem",type=int)
 parser.add_argument('-f','--functionality', help="Would you like to: \n 1) Plot Posterior Histogram for Params\n 2) Calculate Covariance mat for Params\n 3) Sediment variation with time\n", required=True, dest="functionality",type=int)
 parser.add_argument('-b','--bins', help="number of bins in Histogram", required=True, dest="bins",type=int)
+parser.add_argument('-r','--run_nb', help="Folder number", default = 0, dest="run_nb",type=int)
 
 args = parser.parse_args()
 problem = args.problem
 functionality = args.functionality
 bins = args.bins
+run_nb = args.run_nb
 
 def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	
@@ -127,7 +130,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	plt.ylabel(' Frequency ', fontsize = size)
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/' +'rain_posterior.pdf')
-	plt.clf()
+	plt.close()
 	
 	plt.tick_params(labelsize=size)
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
@@ -139,7 +142,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	plt.ylabel(' Parameter value ', fontsize = size)
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/' +'rain_trace.pdf')
-	plt.clf()
+	plt.close()
 
 
 	#####################################      EROD    ################################
@@ -189,16 +192,19 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	plt.tick_params(labelsize=size)
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
 	plt.rcParams.update(params)
+
 	plt.grid(alpha=0.75)
+
 
 	plt.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)	
 	plt.title("Posterior distribution ", fontsize = size)
-	plt.xlabel(' Parameter value  ', fontsize = size)
+	plt.xlabel(' Parameter value ', fontsize = size)
 	plt.ylabel(' Frequency ', fontsize = size)
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/'  + 'erod_posterior.pdf')
-	plt.clf()
+	plt.close()
 	
+
 	plt.tick_params(labelsize=size)
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
 	plt.rcParams.update(params)
@@ -209,7 +215,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	plt.ylabel(' Parameter value ', fontsize = size)
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/' +'erod_trace.pdf')
-	plt.clf()
+	plt.close()
 
 	#####################################      likl    ################################
 	liklmin, liklmax = min(pos_likl), max(pos_likl)
@@ -436,9 +442,9 @@ def main():
 		rain_true_val = 1.5
 		erod_true_val = 5.e-6
 
-	# run_nb = input('Please enter the folder number for Experiment i.e. mcmcresults_% ')
-	run_nb = np.loadtxt('latest_run.txt')
-	run_nb = int(run_nb)
+	# run_nb = np.loadtxt('%s/latest_run.txt' %(directory))
+	# run_nb = int(run_nb)
+	
 	fname = '%s/mcmcresults_%s/' % (directory,run_nb)
 	exp_data = '%s/mcmcresults_%s/exp_data.txt' % (directory,run_nb)
 	prediction_data = '%s/mcmcresults_%s/prediction_data/' % (directory,run_nb)
