@@ -47,6 +47,13 @@ from plotly.offline.offline import _plot_html
 plotly.offline.init_notebook_mode()
 
 
+parser=argparse.ArgumentParser(description='PTBayeslands modelling')
+
+parser.add_argument('-p','--problem', help='Problem Number 1-crater-fast,2-crater,3-etopo-fast,4-etopo,5-null,6-mountain', required=True, dest="problem",type=int)
+
+args = parser.parse_args()
+problem = args.problem
+
 def interpolateArray(coords=None, z=None, dz=None):
 	"""
 	Interpolate the irregular spaced dataset from badlands on a regular grid.
@@ -240,23 +247,50 @@ def viewGrid(directory,sample_num, likl, rain, erod, width = 1000, height = 1000
 
 	if zmax == None:
 		zmax = zData.max()
-
-	data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YlGnBu' ) ])
+	
+	axislabelsize = 20
+	
+	data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YlGnBu', showscale = False ) ])
 
 	layout = Layout(
-		title='Crater Elevation     rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
-		autosize=True,
+		autosize=True, 
 		width=width,
 		height=height,
 		scene=Scene(
-			zaxis=ZAxis(range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-			xaxis=XAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=5,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-			yaxis=YAxis(nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=5,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+			zaxis=ZAxis(title = 'Elev.(m) ', range=[zmin,zmax], autorange=False, nticks=4, gridcolor='rgb(255, 255, 255)',
+						gridwidth=2, zerolinecolor='rgb(255, 255, 255)', zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),
+						tickfont=dict(size=14 ),),
+			xaxis=XAxis(title = 'X (km)  ',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
+						zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),  tickfont=dict(size=14 ),),
+			yaxis=YAxis(title = 'Y (km)  ',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
+						zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),  tickfont=dict(size=14 ),),
 			bgcolor="rgb(244, 244, 248)"
+			)
 		)
-	)
 
 	fig = Figure(data=data, layout=layout)
+	
+	if directory == 'Examples/crater':
+		camera = dict(
+		up=dict(x=0, y=0, z=1),
+		center=dict(x=0.1, y=0.0, z=-0.15),
+		eye=dict(x=0.85, y=1.1, z=1.4)
+		)
+	elif directory == 'Examples/etopo':
+		camera = dict(
+		up=dict(x=0, y=0, z=1),
+		center=dict(x=-0.075, y=-0.075, z=-0.1),
+		eye=dict(x=1.25, y=-1.25, z=1.35)
+		)
+	else: #Default
+		camera = dict(
+		up=dict(x=0, y=0, z=1),
+		center=dict(x=0.0, y=0.0, z=0.0),
+		eye=dict(x=1.25, y=1.25, z=1.25)
+		)
+
+	fig['layout'].update(scene=dict(camera=camera))
+
 	graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/images/elev_grid_%s.html' %(directory,sample_num), validate=False)
 	return    
 
@@ -300,7 +334,7 @@ def viewMap(directory,sample_num, likl, rain, erod, width = 600, height = 600, z
 
 	data=[trace]
 	layout = Layout(
-		title='Crater Erosiondeposition     rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
+		title='',
 		autosize=True,
 		width=width,
 		height=height,
@@ -343,7 +377,7 @@ def viewBar(directory,sample_num, likl, rain, erod, width = 500, height = 500, x
 		trace = go.Bar(x=xData, y = yData)
 		data=[trace]
 		layout = Layout(
-			title='Crater Erosion deposition pts    rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
+			title='',
 			autosize=True,
 			width=width,
 			height=height,
@@ -403,7 +437,7 @@ def main():
 	
 	"""
 	uplift_verified = False
-	choice = input("Please choose a Badlands example to create an Initial and Final Topography for:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n 5) mountain\n 6) tasmania\n 7) australia\n")
+	# problem = input("Please choose a Badlands example to create an Initial and Final Topography for:\n 1) crater_fast\n 2) crater\n 3) etopo_fast\n 4) etopo\n 5) mountain\n 6) tasmania\n 7) australia\n")
 	directory = ""
 
 	erdp_coords_crater = np.array([[60,60],[52,67],[74,76],[62,45],[72,66],[85,73],[90,75],[44,86],[100,80],[88,69]])
@@ -416,23 +450,27 @@ def main():
 
 	final_noise = True
 
-	if choice == 1:
+	if problem == 1:
 		
 		tstart = time.clock()
 		directory = 'Examples/crater_fast'
 		topoGenerator(directory,'%s/crater.xml' %(directory), 1.5 , 5.e-5, 0.5, 1, 15000, erdp_coords_crater,final_noise)
-		
 		print 'TopoGen for crater_fast completed in (s):',time.clock()-tstart
 		
-	elif choice == 2:
+	elif problem == 2:
 		
 		tstart = time.clock()
 		directory = 'Examples/crater'
-		topoGenerator(directory,'%s/crater.xml' %(directory), 1.5 , 5.e-5, 0.5, 1, 50000, erdp_coords_crater,final_noise)
+		# topoGenerator(directory,'%s/crater.xml' %(directory), 1.5 , 5.e-5, 0.5, 1, 50000, erdp_coords_crater,final_noise)
+		
+		#combination 1
+		# topoGenerator(directory,'%s/crater.xml' %(directory), 1.14 , 5.72e-5, 0.5, 1, 50000, erdp_coords_crater,final_noise)
+		#combination 2
+		topoGenerator(directory,'%s/crater.xml' %(directory), 1.98 , 4.36e-5, 0.5, 1, 50000, erdp_coords_crater,final_noise)
 		
 		print 'TopoGen for crater completed in (s):',time.clock()-tstart
 
-	elif choice == 3:
+	elif problem == 3:
 
 		tstart = time.clock()
 		directory = 'Examples/etopo_fast'
@@ -440,15 +478,19 @@ def main():
 		
 		print 'TopoGen for etopo fast completed in (s):',time.clock()-tstart
 
-	elif choice == 4:
+	elif problem == 4:
 
 		tstart = time.clock()
 		directory = 'Examples/etopo'
-		topoGenerator(directory,'%s/etopo.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 1000000, erdp_coords_etopo,final_noise)
+		# topoGenerator(directory,'%s/etopo.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 1000000, erdp_coords_etopo,final_noise)
+		#combination 1
+		# topoGenerator(directory,'%s/etopo.xml' %(directory), 2.64 , 3.96e-6, 0.5, 1, 1000000, erdp_coords_etopo,final_noise)
+		#combination 2
+		topoGenerator(directory,'%s/etopo.xml' %(directory), 2.58 , 3.4e-6, 0.5, 1, 1000000, erdp_coords_etopo,final_noise)
 		
 		print 'TopoGen for etopo completed in (s):',time.clock()-tstart
 
-	elif choice == 5:
+	elif problem == 5:
 
 		tstart = time.clock()
 		directory = 'Examples/mountain'
@@ -458,14 +500,14 @@ def main():
 			topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 50000000, erdp_coords_mountain,final_noise)
 		print 'TopoGen for mountain completed in (s):',time.clock()-tstart
 
-	elif choice == 6:
+	elif problem == 6:
 
 		tstart = time.clock()
 		directory = 'Examples/tasmania'
 		topoGenerator(directory,'%s/tasmania.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 1000000, erdp_coords_tasmania,final_noise)
 		print 'TopoGen for tasmania completed in (s):',time.clock()-tstart
 
-	elif choice == 7:
+	elif problem == 7:
 
 		tstart = time.clock()
 		directory = 'Examples/australia'

@@ -3,7 +3,7 @@
 echo Running Bayes
  
  
-for prob in  2 4 
+for prob in 2 4
 	do
 		for s in 50000
 			do
@@ -14,5 +14,3 @@ for prob in  2 4
 
 echo Bash Succesfully executed
 
-
- 

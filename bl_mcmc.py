@@ -290,10 +290,12 @@ class bayeslands_mcmc():
 				bgcolor="rgb(244, 244, 248)"
 			)
 		)
+		fig = Figure(data=data, layout=layout)
+		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/plots/erdp_barplot_%s.html' %(self.filename, sample_num), validate=False)
 
 		return
 
-	def viewGrid(self, sample_num, likl, rain, erod, width = 1600, height = 1600, zmin = None, zmax = None, zData = None, title='Export Grid'):
+	def viewGrid(self, sample_num, likl, rain, erod, width = 1000, height = 1000, zmin = None, zmax = None, zData = None, title='Export Grid'):
 		"""
 		Use Plotly library to visualise the elevation grid in 3D.
 
@@ -321,24 +323,75 @@ class bayeslands_mcmc():
 		if zmax == None:
 			zmax = zData.max()
 
-		data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YIGnBu' ) ])
-
+		data = Data([ Surface( x=zData.shape[0], y=zData.shape[1], z=zData, colorscale='YIGnBu',  showscale = False ) ])
+		axislabelsize = 20
 		layout = Layout(
-			title='Crater Elevation  	rain = %s, erod = %s, likl = %s ' %( rain, erod, likl),
+			title='',
 			autosize=True,
 			width=width,
 			height=height,
 			scene=Scene(
-				zaxis=ZAxis(title = 'Elevation (m)',range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-				xaxis=XAxis(title = 'X Distance (km)', nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-				yaxis=YAxis(title = 'Y Distance (km)', nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
+				zaxis=ZAxis(title = 'L ', range=[zmin,zmax], autorange=False, nticks=5, gridcolor='rgb(255, 255, 255)',
+							gridwidth=2, zerolinecolor='rgb(255, 255, 255)', zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),
+							tickfont=dict(size=14 ),),
+				xaxis=XAxis(title = 'Rain ',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
+							zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),  tickfont=dict(size=14 ),),
+				yaxis=YAxis(title = 'Erodibility ',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
+							zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),  tickfont=dict(size=14 ),),
 				bgcolor="rgb(244, 244, 248)"
+				)
 			)
-		)
 
 		fig = Figure(data=data, layout=layout)
+		
+		if args.problem == 2:
+			camera = dict(
+			up=dict(x=0, y=0, z=1),
+			center=dict(x=0.1, y=0.0, z=-0.15),
+			eye=dict(x=0.85, y=1.1, z=1.4)
+			)
+		elif args.problem == 4:
+			camera = dict(
+			up=dict(x=0, y=0, z=1),
+			center=dict(x=-0.075, y=-0.075, z=-0.1),
+			eye=dict(x=1.25, y=-1.25, z=1.35)
+			)
+		else: #Default
+			camera = dict(
+			up=dict(x=0, y=0, z=1),
+			center=dict(x=0.0, y=0.0, z=0.0),
+			eye=dict(x=1.25, y=1.25, z=1.25)
+			)
+
+		fig['layout'].update(scene=dict(camera=camera))
+
 		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/plots/elev_grid_%s.html' %(self.filename, sample_num), validate=False)
 		return
+
+	def plot_erodeposition(self, erodep_mean, erodep_std, groundtruth_erodep_pts, sim_interval, fname):
+
+		ticksize = 15
+
+		fig = plt.figure()
+		ax = fig.add_subplot(111)
+		index = np.arange(groundtruth_erodep_pts.size) 
+		ground_erodepstd = np.zeros(groundtruth_erodep_pts.size)
+		erodep_std = np.zeros(groundtruth_erodep_pts.size)
+		opacity = 0.8
+		width = 0.35       # the width of the bars
+
+		rects1 = ax.bar(index, erodep_mean, width, color='blue')
+		rects2 = ax.bar(index+width, groundtruth_erodep_pts, width, color='green')
+		ax.tick_params(labelsize=ticksize)
+		ax.grid(alpha=0.75)
+
+		ax.set_ylabel('Height in meters', fontsize=ticksize)
+		ax.set_xlabel('Location ID ', fontsize=ticksize)
+		ax.set_title('Erosion/Deposition', fontsize=ticksize)
+		plotlegend = ax.legend( (rects1[0], rects2[0]), ('Predicted  ', ' Ground-truth ') )
+		
+		plt.savefig(fname +'/pos_erodep_'+str( sim_interval) +'_.pdf')
+		plt.clf()
 
 	def viewCrossSection(self, list_xslice, list_yslice):
 		"""
@@ -373,7 +426,7 @@ class bayeslands_mcmc():
 		plt.rcParams.update(params)
 		plt.plot(x, x_ymid_real, label='Ground Truth') 
 		plt.plot(x, x_ymid_mean, label='Badlands Pred.')
-		plt.fill_between(x, x_ymid_5th , x_ymid_95th, facecolor='g', alpha=0.4)
+		plt.fill_between(x, x_ymid_5th , x_ymid_95th, facecolor='g', alpha=0.2, label = 'Uncertainty')
 		plt.legend(loc='best')
 		plt.title("Topography  cross section   ", fontsize = size)
 		plt.xlabel(' Distance (km)  ', fontsize = size)
@@ -387,7 +440,7 @@ class bayeslands_mcmc():
 		plt.rcParams.update(params)
 		plt.plot(x_, y_xmid_real, label='Ground Truth') 
 		plt.plot(x_, y_xmid_mean, label='Badlands Pred.')
-		plt.fill_between(x_, y_xmid_5th , y_xmid_95th, facecolor='g', alpha=0.4)
+		plt.fill_between(x_, y_xmid_5th , y_xmid_95th, facecolor='g', alpha=0.2, label = 'Uncertainty')
 		plt.legend(loc='best')
 		plt.title("Topography  cross section   ", fontsize = size)
 		plt.xlabel(' Distance (km)  ', fontsize = size)
@@ -721,7 +774,7 @@ class bayeslands_mcmc():
 			np.savetxt(self.filename+'/prediction_data/mean_pred_elev_%s.txt' %(k), mean_pred_elevation, fmt='%.5f')
 			self.viewGrid('mean_pred_elevation%s' %(k), 'Mean Elevation_%s' %(k), '-', '-', zData=mean_pred_elevation, title='Export Slope Grid ')
 
-		mse_elev = (np.sum(np.square(sum_elev[self.simtime] - self.real_elev)))/real_elev.size
+		rmse_elev = np.sqrt((np.sum(np.square(sum_elev[self.simtime] - self.real_elev)))/real_elev.size)
 
 		for k, v in sum_erdp.items():
 			sum_erdp[k] = np.divide(sum_erdp[k], num_div)
@@ -729,34 +782,18 @@ class bayeslands_mcmc():
 			np.savetxt(self.filename+'/prediction_data/mean_pred_erdp_%s.txt' %(k), mean_pred_erdp, fmt='%.5f')
 			self.viewMap('mean_pred_erdp_%s' %(k), 'Mean erdp_%s' %(k), '-', '-', zData=mean_pred_erdp, title='Export Slope Grid ')
 
-		mse_erdp = (np.sum(np.square(sum_erdp[self.simtime] - self.real_erdp)))/real_erdp.size
+		rmse_erdp = np.sqrt((np.sum(np.square(sum_erdp[self.simtime] - self.real_erdp)))/real_erdp.size)
 
+		i = 0
 		for k, v in sum_erdp_pts.items():
 			sum_erdp_pts[k] = np.divide(sum_erdp_pts[k], num_div)
 			mean_pred_erdp_pts = sum_erdp_pts[k]
+			self.plot_erodeposition(mean_pred_erdp_pts, mean_pred_erdp_pts, self.real_erdp_pts[i], k,self.filename) 
 			np.savetxt(self.filename+'/prediction_data/mean_pred_erdp_pts_%s.txt' %(k), mean_pred_erdp_pts, fmt='%.5f')
 			self.viewBar('mean_pred_erdp_pts_%s' %(k), 'Mean erdp pts_%s' %(k), '-', '-',xData = self.erdp_coords , yData=mean_pred_erdp_pts, title='Export Slope Grid ')
+			i+=1 
+		rmse_erdp_pts = np.sqrt((np.sum(np.square(sum_erdp_pts[self.simtime] - self.real_erdp_pts)))/real_erdp_pts.size)
 
-		mse_erdp_pts = (np.sum(np.square(sum_erdp_pts[self.simtime] - self.real_erdp_pts)))/real_erdp_pts.size
-
-		end = time.time()
-		total_time = end - start
-		total_time_mins = total_time/60
-		accepted_count =  len(count_list)
-		# print (count_list)
-		accept_ratio = accepted_count / (samples * 1.0) * 100
-		
-		print 'Time elapsed: (s)', total_time
-		print accepted_count, ' number accepted'
-		print len(count_list) / (samples * 0.01), '% was accepted'
-		print 'Results are stored in ', self.filename
-
-		with file(('%s/experiment_stats.txt' % (self.filename)),'w') as outres:
-			outres.write('MSEelev: {0}\nMSEerdp: {1}\nMSEerdp_pts: {2}\nTime:(s) {3}\nTime:(mins) {4}\n'.format(mse_elev,mse_erdp,mse_erdp_pts,total_time,total_time_mins))
-			outres.write('Accept ratio: {0} %\nSamples accepted : {1} out of {2}\n Count List : {3} '.format(accept_ratio, accepted_count, self.samples, count_list))
-			outres.write('Time Elapsed: (s) {0} , (mins): {1}'.format(total_time, total_time_mins))
-		np.savetxt('%s/prediction_data/pred_xslc.txt' % (self.filename), list_xslicepred )
-		np.savetxt('%s/prediction_data/pred_yslc.txt' % (self.filename), list_yslicepred )
 
 		self.viewCrossSection(list_xslicepred.T, list_yslicepred.T)
 
@@ -772,6 +809,24 @@ class bayeslands_mcmc():
 		plt.savefig(self.filename+'/accept_list.pdf' )
 		plt.clf()
 		
+		end = time.time()
+		total_time = end - start
+		total_time_mins = total_time/60
+		accepted_count =  len(count_list)
+		accept_ratio = accepted_count / (samples * 1.0) * 100
+		
+		print 'Time elapsed: (s)', total_time
+		print accepted_count, ' number accepted'
+		print len(count_list) / (samples * 0.01), '% was accepted'
+		print 'Results are stored in ', self.filename
+
+		with file(('%s/experiment_stats.txt' % (self.filename)),'w') as outres:
+			outres.write('RMSEelev: {0}\nRMSEerdp: {1}\nRMSEerdp_pts: {2}\nTime:(s) {3}\nTime:(mins) {4}\n'.format(rmse_elev,rmse_erdp,rmse_erdp_pts,total_time,total_time_mins))
+			outres.write('Accept ratio: {0} %\nSamples accepted : {1} out of {2}\n Count List : {3} '.format(accept_ratio, accepted_count, self.samples, count_list))
+			outres.write('Time Elapsed: (s) {0} , (mins): {1}'.format(total_time, total_time_mins))
+		np.savetxt('%s/prediction_data/pred_xslc.txt' % (self.filename), list_xslicepred )
+		np.savetxt('%s/prediction_data/pred_yslc.txt' % (self.filename), list_yslicepred )
+
 		return
 
 def main():

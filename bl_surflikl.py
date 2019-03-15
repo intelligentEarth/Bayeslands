@@ -220,23 +220,35 @@ class BayesLands():
 
 		if zmax == None:
 			zmax = zData.max()
+		axislabelsize = 20
 
 		data = Data([ Surface( x=rain, y=erod, z=zData ) ])
 
 		layout = Layout(
-			title=plot_name,
-			autosize=True,
-			width=width,
-			height=height,
-			scene=Scene(
-				zaxis=ZAxis(title = 'Log Likelihood',range=[zmin, zmax],autorange=False,nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-				xaxis=XAxis(title = 'Rain (m/a)',nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-				yaxis=YAxis(title = 'Erodibility',nticks=10,gridcolor='rgb(255, 255, 255)',gridwidth=2,zerolinecolor='rgb(255, 255, 255)',zerolinewidth=2),
-				bgcolor="rgb(244, 244, 248)"
+		autosize=True, 
+		width=width,
+		height=height,
+		scene=Scene(
+			zaxis=ZAxis(title = 'L ', range=[zmin,zmax], autorange=False, nticks=5, gridcolor='rgb(255, 255, 255)',
+						gridwidth=2, zerolinecolor='rgb(255, 255, 255)', zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),
+						tickfont=dict(size=14 ),),
+			xaxis=XAxis(title = 'Rain ',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
+						zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),  tickfont=dict(size=14 ),),
+			yaxis=YAxis(title = 'Erodibility ',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
+						zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),  tickfont=dict(size=14 ),),
+			bgcolor="rgb(244, 244, 248)"
 			)
 		)
 
 		fig = Figure(data=data, layout=layout)
+		
+		camera = dict(up=dict(x=0, y=0, z=1),
+		center=dict(x=0.0, y=0.0, z=0.0),
+		eye=dict(x=1.25, y=1.25, z=1.25)
+		)
+
+		fig['layout'].update(scene=dict(camera=camera))
+
 		graph = plotly.offline.plot(fig, auto_open=False, output_type='file', filename='%s/plots/elev_grid_%s.html' %(fname, plot_name), validate=False)
 		return
 
@@ -276,7 +288,7 @@ class BayesLands():
 		plt.savefig('%s/plot.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
 		plt.show()
 
-	def storeParams(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_marinediff, pos_aerialdiff, pos_likl):
+	def storeParams(self, naccept, pos_rain, pos_erod, pos_m, pos_n, tausq_elev, tausq_erdp_pts, pos_likl):
 		"""
 		
 		"""
@@ -285,8 +297,8 @@ class BayesLands():
 		pos_erod = str(pos_erod)
 		pos_m = str(pos_m)
 		pos_n = str(pos_n)
-		pos_marinediff = str(pos_marinediff) 
-		pos_aerialdiff = str(pos_aerialdiff) 
+		tausq_elev = str(np.sqrt(tausq_elev)) 
+		tausq_erdp_pts = str(np.sqrt(tausq_erdp_pts)) 
 
 		if not os.path.isfile(('%s/exp_data.txt' % (self.filename))):
 			with file(('%s/exp_data.txt' % (self.filename)),'w') as outfile:
@@ -299,22 +311,14 @@ class BayesLands():
 				outfile.write('\t')
 				outfile.write(pos_n)
 				outfile.write('\t')
-				outfile.write(pos_marinediff)
-				outfile.write('\t')
-				outfile.write(pos_aerialdiff)
-				outfile.write('\t')
-				
 				outfile.write(pos_likl)
-				# outfile.write('\t')
-				# outfile.write(sq_error)
-				# outfile.write('\t')
-				# outfile.write(tausq_elev)
-				# outfile.write('\t')
-				# outfile.write(tausq_erdp_pts)
+				outfile.write('\t')
+				outfile.write(tausq_elev)
+				outfile.write('\t')
+				outfile.write(tausq_erdp_pts)
 				outfile.write('\n')
 		else:
 			with file(('%s/exp_data.txt' % (self.filename)),'a') as outfile:
-				# outfile.write('\n# {0}\t'.format(naccept))
 				outfile.write(pos_rain)
 				outfile.write('\t')
 				outfile.write(pos_erod)
@@ -323,18 +327,11 @@ class BayesLands():
 				outfile.write('\t')
 				outfile.write(pos_n)
 				outfile.write('\t')
-				outfile.write(pos_marinediff)
+				outfile.write(pos_likl)
 				outfile.write('\t')
-				outfile.write(pos_aerialdiff)
+				outfile.write(tausq_elev)
 				outfile.write('\t')
-	
-				outfile.write(pos_likl)				
-				# outfile.write('\t')
-				# outfile.write(sq_error)
-				# outfile.write('\t')
-				# outfile.write(tausq_elev)
-				# outfile.write('\t')
-				# outfile.write(tausq_erdp_pts)
+				outfile.write(tausq_erdp_pts)
 				outfile.write('\n')
 				  
 	def likelihoodFunc(self,input_vector, real_elev, real_erdp, real_erdp_pts):
@@ -368,9 +365,10 @@ class BayesLands():
 		
 		else:
 			likelihood = np.sum(likelihood_elev)
-			sq_error = sq_error_elev
+			sq_error_erdp_pts = 0
+			sq_error = sq_error_elev + sq_error_erdp_pts
 
-		return likelihood, sq_error, tausq_elev, tausq_erdp_pts
+		return likelihood, sq_error, sq_error_elev, sq_error_erdp_pts
 
 	def likelihoodSurface(self):
 		
@@ -399,6 +397,8 @@ class BayesLands():
 
 		pos_likl = np.zeros((dimx, dimy))
 		pos_sq_error = np.zeros((dimx, dimy))
+		pos_tau_elev = np.zeros((dimx, dimy))
+		pos_tau_erdp_pts = np.zeros((dimx, dimy))
 		# print 'pos_likl', pos_likl.shape, 'pos_rain', pos_rain, 'pos_erod', pos_erod
 
 		# Storing RMSE, tau values and adding initial run to accepted list
@@ -434,7 +434,7 @@ class BayesLands():
 
 				# Passing paramters to calculate likelihood and rmse with new tau
 				likelihood, sq_error, tau_elev, tau_erdp_pts = self.likelihoodFunc(v_proposal,real_elev, real_erdp, real_erdp_pts)
-				# print 'sq_error', sq_error
+				print 'sq_error : ', sq_error, 'tau_elev :', tau_elev, 'tau_erdp_pts: ',tau_erdp_pts
 				pos_erod[i] = p_erod
 				pos_rain[i] = p_rain
 				pos_m[i] = p_m
@@ -444,7 +444,9 @@ class BayesLands():
 
 				pos_likl[r,e] = likelihood
 				pos_sq_error[r,e] = sq_error
-				self.storeParams(i, pos_rain[i], pos_erod[i], pos_m[i], pos_n[i], pos_marinediff[i], pos_aerialdiff[i], pos_likl[r,e])
+				pos_tau_elev[r,e] = tau_elev
+				pos_tau_erdp_pts[r,e] = tau_erdp_pts
+				self.storeParams(i, pos_rain[i], pos_erod[i], pos_m[i], pos_n[i],tau_elev, tau_erdp_pts, pos_likl[r,e])
 
 				i += 1
 
@@ -564,7 +566,7 @@ def main():
 
 
 	with file(('%s/liklSurface_%s/description.txt' % (directory,run_nb)),'a') as outfile:
-			outfile.write('\n\samples: {0}'.format(samples))
+			outfile.write('\n\tsamples: {0}'.format(samples))
 			outfile.write('\n\terod_limits: {0}'.format(erodlimits))
 			outfile.write('\n\train_limits: {0}'.format(rainlimits))
 			outfile.write('\n\terdp coords: {0}'.format(erdp_coords))

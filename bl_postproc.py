@@ -30,6 +30,7 @@ import plotly.graph_objs as go
 import matplotlib as mpl
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from PIL import Image
 from io import StringIO
 from cycler import cycler
@@ -69,65 +70,32 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	slen = np.arange(0,len(pos_likl),1)
 	font = 9
 	width = 1
-
 	rain_true_val = np.asarray(t_val[0], dtype = float)
 	erod_true_val = np.asarray(t_val[1], dtype = float)
-	print 'r_t ', rain_true_val
-	print 'e_t ', erod_true_val 
-	color = ['brown','blue','magenta','red','purple','darkorange','deepskyblue','mediumslateblue','limegreen','black']
 	######################################     RAIN      ################################
 
 	rainmin, rainmax = min(pos_rain), max(pos_rain)
-	#print rainmin, rainmax, len(pos_likl)
 	rainspace = np.linspace(rainmin,rainmax,len(pos_rain))
 	rainm,rains = stats.norm.fit(pos_rain)
 	pdf_rain = stats.norm.pdf(rainspace,rainm,rains)
 	
-	# fig = plt.figure(figsize=(10,12))
-	# ax = fig.add_subplot(111)
-	# ax.spines['top'].set_color('none')
-	# ax.spines['bottom'].set_color('none')
-	# ax.spines['left'].set_color('none')
-	# ax.spines['right'].set_color('none')
-	# ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
-	# ax.set_title(' Rain Parameter', fontsize=  font+2)#, y=1.02)
-	
-	# ax1 = fig.add_subplot(211)
-	# ax1.set_facecolor('#f2f2f3')
-	# # ax1.set_axis_bgcolor("white")
-	# n, rainbins, patches = ax1.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)	
-	
-	# for count, v in enumerate(rain_true_val):
-	# 		ax1.axvline(x=v, color='%s' %(color[count]), linestyle='dashed', linewidth=1) # comment when go real value is 
-
-	# ax1.grid(True)
-	# ax1.set_ylabel('Frequency',size= font+1)
-	# ax1.set_xlabel('Rain', size= font+1)
-	
-	# ax2 = fig.add_subplot(212)
-	# ax2.set_facecolor('#f2f2f3')
-	# ax2.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
-	# ax2.set_title('Trace of Rain',size= font+2)
-	# ax2.set_xlabel('Samples',size= font+1)
-	# ax2.set_ylabel('Rain', size= font+1)
-	# ax2.set_xlim([0,np.amax(slen)])
-
-	# fig.tight_layout()
-	# fig.subplots_adjust(top=0.88)
-	# plt.savefig('%srain.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
-	# plt.clf()
-
 	size = 15
 
 	plt.tick_params(labelsize=size)
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
 	plt.rcParams.update(params)
+
 	plt.grid(alpha=0.75)
 
 	plt.hist(pos_rain, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)	
 	plt.title("Posterior distribution ", fontsize = size)
+	
+	plt.axvline(x=t_val[0], color='r', linewidth=2) # comment when go real value is 
+
 	plt.xlabel(' Parameter value  ', fontsize = size)
 	plt.ylabel(' Frequency ', fontsize = size)
+
+	
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/' +'rain_posterior.pdf')
 	plt.close()
@@ -136,10 +104,15 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
 	plt.rcParams.update(params)
 
+	fig, ax = plt.subplots()
+	ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.1f'))
+
 	plt.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
 	plt.title("Parameter trace plot", fontsize = size)
 	plt.xlabel(' Number of Samples  ', fontsize = size)
 	plt.ylabel(' Parameter value ', fontsize = size)
+	
+
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/' +'rain_trace.pdf')
 	plt.close()
@@ -149,61 +122,27 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 
 	erodmin, erodmax = min(pos_erod), max(pos_erod)
 	erodspace = np.linspace(erodmin,erodmax,len(pos_erod))
-	print 'erodmin', erodmin
-	print 'erodmax', erodmax
 	erodm,erods = stats.norm.fit(pos_erod)
 	pdf_erod = stats.norm.pdf(erodspace,erodm,erods)
 
-	# #erod_opt_value = 9.e-05	
-	# fig = plt.figure(figsize=(10,12))
-	# ax = fig.add_subplot(111)
-	# ax.spines['top'].set_color('none')
-	# ax.spines['bottom'].set_color('none')
-	# ax.spines['left'].set_color('none')
-	# ax.spines['right'].set_color('none')
-	# ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
-	# ax.set_title(' Erosion Parameter', fontsize=  font+2)#, y=1.02)
-
-	# ax1 = fig.add_subplot(211)
-	# ax1.set_facecolor('#f2f2f3')
-	# # ax1.set_axis_bgcolor("white")
-	# n, erodbins, patches = ax1.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)
-
-	# for count, v in enumerate(erod_true_val):
-	# 		ax1.axvline(x=v, color='%s' %(color[count]), linestyle='dashed', linewidth=1) # comment when go real value is 
-
-	# ax1.grid(True)
-	# ax1.set_ylabel('Frequency',size= font+1)
-	# ax1.set_xlabel('Erodibility', size= font+1)
-	
-	# ax2 = fig.add_subplot(212)
-	# ax2.set_facecolor('#f2f2f3')
-	# ax2.plot(slen,pos_erod,linestyle='-', linewidth= width, color='k', label=None)
-	# ax2.set_title('Trace of Erodibility',size= font+2)
-	# ax2.set_xlabel('Samples',size= font+1)
-	# ax2.set_ylabel('Erodibility', size= font+1)
-	# ax2.set_xlim([0,np.amax(slen)])
-	# fig.tight_layout()
-	# fig.subplots_adjust(top=0.88)
-	# plt.savefig('%serod.png'% (fname), bbox_inches='tight', dpi=300, transparent=False)
-	# plt.clf()
 	size = 15
 
-	plt.tick_params(labelsize=size)
+	plt.tick_params(labelsize=size, axis = 'x', rotation = 20)
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
 	plt.rcParams.update(params)
 
 	plt.grid(alpha=0.75)
-
-
 	plt.hist(pos_erod, bins=nb_bins, alpha=0.5, facecolor='sandybrown', density=False)	
 	plt.title("Posterior distribution ", fontsize = size)
+	
+	plt.axvline(x=t_val[1], color='r', linewidth=2) # comment when go real value is 
+
 	plt.xlabel(' Parameter value ', fontsize = size)
 	plt.ylabel(' Frequency ', fontsize = size)
+	
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/'  + 'erod_posterior.pdf')
 	plt.close()
-	
 
 	plt.tick_params(labelsize=size)
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
@@ -213,6 +152,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	plt.title("Parameter trace plot", fontsize = size)
 	plt.xlabel(' Number of Samples  ', fontsize = size)
 	plt.ylabel(' Parameter value ', fontsize = size)
+
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/' +'erod_trace.pdf')
 	plt.close()
@@ -442,9 +382,11 @@ def main():
 		rain_true_val = 1.5
 		erod_true_val = 5.e-6
 
-	# run_nb = np.loadtxt('%s/latest_run.txt' %(directory))
-	# run_nb = int(run_nb)
-	
+	if args.run_nb == 0:
+		run_nb = np.loadtxt('%s/latest_run.txt' %(directory))
+		run_nb = int(run_nb)
+	else:
+		run_nb = args.run_nb
 	fname = '%s/mcmcresults_%s/' % (directory,run_nb)
 	exp_data = '%s/mcmcresults_%s/exp_data.txt' % (directory,run_nb)
 	prediction_data = '%s/mcmcresults_%s/prediction_data/' % (directory,run_nb)
@@ -475,7 +417,7 @@ def main():
 	rain_ = np.asarray(rain, dtype = float)
 	erod_ = np.asarray(erod, dtype = float)
 	likl_ = np.asarray(likl, dtype = float)
-	t_val_ = np.loadtxt('%s/data/true_values.txt' % (directory))
+	t_val_ = np.loadtxt('%s/data/true_value.txt' % (directory))
 	erdp_pts_data = np.loadtxt('%s/data/final_erdp_pts.txt' % (directory))
 	prefixed = [filename for filename in os.listdir(prediction_data) if filename.startswith("mean_pred_erdp_pts_")]
 
