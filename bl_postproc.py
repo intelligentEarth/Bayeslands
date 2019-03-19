@@ -79,7 +79,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	rainm,rains = stats.norm.fit(pos_rain)
 	pdf_rain = stats.norm.pdf(rainspace,rainm,rains)
 	
-	size = 15
+	size = 13
 
 	plt.tick_params(labelsize=size)
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
@@ -104,15 +104,11 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}
 	plt.rcParams.update(params)
 
-	fig, ax = plt.subplots()
-	ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.1f'))
-
 	plt.plot(slen,pos_rain,linestyle='-', linewidth= width, color='k', label=None)
 	plt.title("Parameter trace plot", fontsize = size)
 	plt.xlabel(' Number of Samples  ', fontsize = size)
 	plt.ylabel(' Parameter value ', fontsize = size)
 	
-
 	plt.tight_layout()  
 	plt.savefig(fname + 'plots/' +'rain_trace.pdf')
 	plt.close()
@@ -125,7 +121,7 @@ def plotFunctions(fname, pos_likl, pos_rain, pos_erod, bins, t_val):
 	erodm,erods = stats.norm.fit(pos_erod)
 	pdf_erod = stats.norm.pdf(erodspace,erodm,erods)
 
-	size = 15
+	size = 13
 
 	plt.tick_params(labelsize=size, axis = 'x', rotation = 20)
 	params = {'legend.fontsize': size, 'legend.handlelength': 2}

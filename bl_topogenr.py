@@ -497,7 +497,7 @@ def main():
 		uplift_verified = checkUplift(directory, '/data/uplift', '/data/nodes')
 		# uplift_verified = True
 		if uplift_verified:
-			topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 50000000, erdp_coords_mountain,final_noise)
+			topoGenerator(directory,'%s/mountain.xml' %(directory), 1.5 , 5.e-6, 0.5, 1, 1000000, erdp_coords_mountain,final_noise)
 		print 'TopoGen for mountain completed in (s):',time.clock()-tstart
 
 	elif problem == 6:

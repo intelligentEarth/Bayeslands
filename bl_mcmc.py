@@ -331,12 +331,12 @@ class bayeslands_mcmc():
 			width=width,
 			height=height,
 			scene=Scene(
-				zaxis=ZAxis(title = 'L ', range=[zmin,zmax], autorange=False, nticks=5, gridcolor='rgb(255, 255, 255)',
+				zaxis=ZAxis(title = 'Elev. (m)', range=[zmin,zmax], autorange=False, nticks=5, gridcolor='rgb(255, 255, 255)',
 							gridwidth=2, zerolinecolor='rgb(255, 255, 255)', zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),
 							tickfont=dict(size=14 ),),
-				xaxis=XAxis(title = 'Rain ',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
+				xaxis=XAxis(title = 'X (km)',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
 							zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),  tickfont=dict(size=14 ),),
-				yaxis=YAxis(title = 'Erodibility ',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
+				yaxis=YAxis(title = 'Y (km)',nticks = 8, gridcolor='rgb(255, 255, 255)', gridwidth=2,zerolinecolor='rgb(255, 255, 255)',
 							zerolinewidth=2, showticklabels = True,  titlefont=dict(size=axislabelsize),  tickfont=dict(size=14 ),),
 				bgcolor="rgb(244, 244, 248)"
 				)
@@ -419,21 +419,25 @@ class bayeslands_mcmc():
 		x = np.linspace(0, x_ymid_mean.size , num=x_ymid_mean.size) 
 		x_ = np.linspace(0, y_xmid_mean.size , num=y_xmid_mean.size)
 
-		size = 15
-
+		size = 13
+		plt.close()
 		plt.tick_params(labelsize=size)
 		params = {'legend.fontsize': size, 'legend.handlelength': 2}
 		plt.rcParams.update(params)
+		
 		plt.plot(x, x_ymid_real, label='Ground Truth') 
 		plt.plot(x, x_ymid_mean, label='Badlands Pred.')
+		plt.grid(alpha=0.00)
+
 		plt.fill_between(x, x_ymid_5th , x_ymid_95th, facecolor='g', alpha=0.2, label = 'Uncertainty')
+		
 		plt.legend(loc='best')
 		plt.title("Topography  cross section   ", fontsize = size)
 		plt.xlabel(' Distance (km)  ', fontsize = size)
 		plt.ylabel(' Height (m)', fontsize = size)
 		plt.tight_layout()
 		plt.savefig(self.filename+'/x_ymid_opt.pdf')
-		plt.clf()
+		plt.close()
 
 		plt.tick_params(labelsize=size)
 		params = {'legend.fontsize': size, 'legend.handlelength': 2}
@@ -441,13 +445,14 @@ class bayeslands_mcmc():
 		plt.plot(x_, y_xmid_real, label='Ground Truth') 
 		plt.plot(x_, y_xmid_mean, label='Badlands Pred.')
 		plt.fill_between(x_, y_xmid_5th , y_xmid_95th, facecolor='g', alpha=0.2, label = 'Uncertainty')
+		plt.grid(alpha=0.00)
 		plt.legend(loc='best')
 		plt.title("Topography  cross section   ", fontsize = size)
 		plt.xlabel(' Distance (km)  ', fontsize = size)
 		plt.ylabel(' Height (m)', fontsize = size)
 		plt.tight_layout()
 		plt.savefig(self.filename+'/y_xmid_opt.pdf')
-		plt.clf()
+		plt.close()
 
 	def storeParams(self, naccept, pos_rain, pos_erod, pos_m, pos_n, pos_tau_elev, pos_tau_erdp, pos_tau_erdp_pts, pos_likl): 
 		"""

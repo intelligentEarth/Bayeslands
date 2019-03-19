@@ -536,8 +536,8 @@ def main():
 		erdp_coords = erdp_coords_etopo
 
 	elif choice == 5:
-		directory = 'Examples/tasmania'
-		xmlinput = '%s/tasmania.xml' %(directory)
+		directory = 'Examples/mountain'
+		xmlinput = '%s/mountain.xml' %(directory)
 		simtime = 1000000
 		rainlimits = [0.0, 3.0]
 		erodlimits = [3.e-6, 7.e-6]

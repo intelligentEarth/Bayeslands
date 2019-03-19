@@ -3,9 +3,9 @@
 echo Running Bayes
  
  
-for prob in 2 4
+for prob in 4
 	do
-		for s in 50000
+		for s in 1000 500
 			do
 				python bl_mcmc.py -p $prob -s $s
 				python bl_postproc.py -p $prob -f 1 -b 20
