@@ -4,7 +4,7 @@
     <!-- Regular grid structure -->
     <grid>
         <!-- Digital elevation model file path -->
-        <demfile>Examples/etopo/data/nodes.csv</demfile>
+        <demfile>data/nodes.csv</demfile>
         <!-- Optional parameter (integer) used to decrease TIN resolution.
              The default value is set to 1. Increasing the factor
              value will multiply the digital elevation model resolution
@@ -27,7 +27,7 @@
         <!-- Relative sea-level position [m] -->
         <position>0.</position>
         <!-- Sea-level curve - (optional) -->
-        <curve>Examples/etopo/data/sealevel.csv</curve>
+        <curve>data/sealevel.csv</curve>
     </sea>
 
     <!-- Precipitation structure -->
